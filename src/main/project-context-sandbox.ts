@@ -278,7 +278,7 @@ export class SandboxSupervisor {
   async cleanupOrphans(): Promise<void> {
     for (const base of [this.inputBase, this.lowBase]) {
       await assertSafeExternalPath(base, this.env.protectedRoot);
-      let names: string[] = [];
+      let names: string[];
       try {
         names = await readdir(base);
       } catch {

@@ -58,7 +58,9 @@ describe("TypeSafe Jev Score adapter", () => {
       "https://api.typesafe.ai/v1/systemone",
       expect.objectContaining({ method: "POST" }),
     );
-    const request = JSON.parse((fetcher as any).mock.calls[0][1].body);
+    const request = JSON.parse(
+      String(vi.mocked(fetcher).mock.calls[0][1]?.body),
+    );
     expect(request.questions.utility.type).toBe("score");
     expect(request.questions.utility.criteria).toHaveLength(3);
     expect(request.questions.technical_depth.type).toBe("score");

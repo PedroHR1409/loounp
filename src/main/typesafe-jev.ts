@@ -93,18 +93,23 @@ export async function assessWithTypeSafe(
       );
     throw new Error(`Jev TypeSafe: HTTP ${response.status}.`);
   }
-  let payload: any;
+  let payload: unknown;
   try {
     payload = await response.json();
   } catch {
     throw new Error("A TypeSafe retornou uma resposta Jev inválida.");
   }
-  if (typeof payload?.model !== "string" || !/^jev(?:-|$)/i.test(payload.model))
+  if (
+    !isPlainRecord(payload) ||
+    typeof payload.model !== "string" ||
+    !/^jev(?:-|$)/i.test(payload.model)
+  )
     throw new Error(
       "A TypeSafe retornou uma identidade de modelo Jev inválida.",
     );
-  const answers = payload?.answers;
-  if (!answers || typeof answers !== "object")
+  const model = payload.model;
+  const answers = payload.answers;
+  if (!isPlainRecord(answers))
     throw new Error("A TypeSafe retornou uma resposta Jev incompleta.");
   const utility = validateDimension(answers.utility, [
     "Only broad topic overlap or no clear connection to the user’s learning goals.",
@@ -127,7 +132,7 @@ export async function assessWithTypeSafe(
     (value): value is JevDimension => Boolean(value),
   );
   return {
-    model: payload.model,
+    model,
     ...(utility ? { utility } : {}),
     ...(technicalDepth ? { technicalDepth } : {}),
     confidence:
@@ -160,29 +165,33 @@ export function createJevAssessment(
   };
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function validateDimension(
-  raw: any,
+  raw: unknown,
   rubric: string[],
 ): JevDimension | undefined {
-  const allowed = rubric.map((_, index) => String(index));
+  if (!isPlainRecord(raw) || raw.type !== "score") return undefined;
+  const { score, confidence, probabilities, legend } = raw;
   if (
-    !raw ||
-    raw.type !== "score" ||
-    !Number.isFinite(raw.score) ||
-    raw.score < 0 ||
-    raw.score > rubric.length - 1 ||
-    !Number.isFinite(raw.confidence) ||
-    raw.confidence < 0 ||
-    raw.confidence > 1 ||
-    !raw.probabilities ||
-    typeof raw.probabilities !== "object" ||
-    Array.isArray(raw.probabilities) ||
-    !raw.legend ||
-    typeof raw.legend !== "object" ||
-    Array.isArray(raw.legend)
+    typeof score !== "number" ||
+    !Number.isFinite(score) ||
+    score < 0 ||
+    score > rubric.length - 1
   )
     return undefined;
-  const entries = Object.entries(raw.probabilities);
+  if (
+    typeof confidence !== "number" ||
+    !Number.isFinite(confidence) ||
+    confidence < 0 ||
+    confidence > 1
+  )
+    return undefined;
+  if (!isPlainRecord(probabilities) || !isPlainRecord(legend)) return undefined;
+  const allowed = rubric.map((_, index) => String(index));
+  const entries = Object.entries(probabilities);
   if (
     entries.length !== allowed.length ||
     entries.some(
@@ -195,31 +204,28 @@ function validateDimension(
     )
   )
     return undefined;
-  if (
-    Object.keys(raw.legend).length !== rubric.length ||
-    rubric.some(
-      (label, index) =>
-        typeof raw.legend[String(index)] !== "string" ||
-        raw.legend[String(index)].trim() !== label,
-    )
-  )
-    return undefined;
-  const total = entries.reduce((sum, [, value]) => sum + Number(value), 0);
+  if (Object.keys(legend).length !== rubric.length) return undefined;
+  for (const [index, label] of rubric.entries()) {
+    const entry = legend[String(index)];
+    if (typeof entry !== "string" || entry.trim() !== label) return undefined;
+  }
+  const numericEntries = entries as Array<[string, number]>;
+  const total = numericEntries.reduce((sum, [, value]) => sum + value, 0);
   if (Math.abs(total - 1) > 0.02) return undefined;
-  const expected = entries.reduce(
-    (sum, [index, value]) => sum + Number(index) * Number(value),
+  const expected = numericEntries.reduce(
+    (sum, [index, value]) => sum + Number(index) * value,
     0,
   );
-  if (Math.abs(expected - raw.score) > 0.05) return undefined;
+  if (Math.abs(expected - score) > 0.05) return undefined;
   const names =
     rubric.length === 3 && rubric[1].startsWith("Some useful")
       ? ["low", "partial", "high"]
       : ["low", "medium", "high"];
   return {
-    level: names[Math.round(raw.score)] as JevDimension["level"],
-    score: raw.score,
-    confidence: raw.confidence,
-    probabilities: Object.fromEntries(entries as Array<[string, number]>),
+    level: names[Math.round(score)] as JevDimension["level"],
+    score,
+    confidence,
+    probabilities: Object.fromEntries(numericEntries),
     legend: rubric,
   };
 }
