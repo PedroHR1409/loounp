@@ -63,10 +63,7 @@
       "nodes": 7,
       "edges": 8,
       "crossFileEdges": 4,
-      "crossFileRelations": [
-        "imports",
-        "calls"
-      ]
+      "crossFileRelations": ["imports", "calls"]
     },
     {
       "project": "landing-site",
@@ -74,9 +71,7 @@
         "gn_5f8c4 build.py @ landing-site/src/build.py",
         "gn_76742 render() @ landing-site/src/build.py"
       ],
-      "edgesDetail": [
-        "gn_5f8c4 -contains-> gn_76742"
-      ],
+      "edgesDetail": ["gn_5f8c4 -contains-> gn_76742"],
       "status": "ok",
       "nodes": 2,
       "edges": 1,
@@ -114,10 +109,7 @@
       "nodes": 10,
       "edges": 11,
       "crossFileEdges": 4,
-      "crossFileRelations": [
-        "imports",
-        "calls"
-      ]
+      "crossFileRelations": ["imports", "calls"]
     },
     {
       "project": "orders-api",
@@ -148,10 +140,7 @@
       "nodes": 10,
       "edges": 9,
       "crossFileEdges": 2,
-      "crossFileRelations": [
-        "imports",
-        "calls"
-      ]
+      "crossFileRelations": ["imports", "calls"]
     }
   ],
   "results": [
@@ -223,10 +212,7 @@
         "notes-rag/src/encoder.py",
         "notes-rag/src/encoder.py"
       ],
-      "neighborFiles": [
-        "notes-rag/src/store.py",
-        "notes-rag/src/pipeline.py"
-      ],
+      "neighborFiles": ["notes-rag/src/store.py", "notes-rag/src/pipeline.py"],
       "invalidReferences": 0,
       "retrievalMs": {
         "lexical": 5,
@@ -247,9 +233,7 @@
         "etl-jobs/src/warehouse.py",
         "orders-api/src/transport/policy.py"
       ],
-      "hybridOnlyFiles": [
-        "orders-api/src/payments.py"
-      ],
+      "hybridOnlyFiles": ["orders-api/src/payments.py"],
       "inferredEvidence": [
         {
           "file": "orders-api/src/payments.py",
