@@ -915,3 +915,44 @@ describe("article-to-project orchestration", () => {
     expect(continued.operation.state).toBe("awaiting_consent");
   });
 });
+
+describe("pendingTermsCount na listagem de ideias", () => {
+  const ideaWithTerms = (terms: Array<{ name: string; explanation: string }>) =>
+    JSON.stringify({
+      status: "recommendation",
+      modality: "new",
+      title: "Busca híbrida",
+      description: "d",
+      reasons: [{ text: "artigo", evidenceIds: [] }],
+      terms,
+    });
+
+  it("conta todos os termos quando nenhum foi respondido (AT-001)", async () => {
+    reply = async () =>
+      ideaWithTerms([
+        { name: "BM25", explanation: "Ranking de texto." },
+        { name: "grafo", explanation: "Rede de nós." },
+      ]);
+    const { svc, view } = await started();
+    await generate(svc, view);
+    expect(svc.history({})[0].pendingTermsCount).toBe(2);
+  });
+
+  it('termo respondido como "não conhece" continua pendente (AT-002)', async () => {
+    reply = async () =>
+      ideaWithTerms([{ name: "BM25", explanation: "Ranking de texto." }]);
+    const { svc, view } = await started();
+    await generate(svc, view);
+    await svc.answerKnowledge({ term: "BM25", known: false });
+    expect(svc.history({})[0].pendingTermsCount).toBe(1);
+  });
+
+  it('termo respondido como "já conhece" não conta mais (AT-003)', async () => {
+    reply = async () =>
+      ideaWithTerms([{ name: "BM25", explanation: "Ranking de texto." }]);
+    const { svc, view } = await started();
+    await generate(svc, view);
+    await svc.answerKnowledge({ term: "BM25", known: true });
+    expect(svc.history({})[0].pendingTermsCount).toBe(0);
+  });
+});

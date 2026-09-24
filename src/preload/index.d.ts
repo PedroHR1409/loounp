@@ -170,6 +170,7 @@ declare global {
     contentId: string | null;
     rating: number | null;
     contextRevoked: boolean;
+    pendingTermsCount: number;
   };
   type IgnoredSourceView = {
     id: string;

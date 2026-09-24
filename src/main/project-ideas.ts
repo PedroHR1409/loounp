@@ -1379,8 +1379,7 @@ export class ProjectIdeasService {
     };
   }
 
-  private termsView(recommendation: Recommendation) {
-    const ledger = this.store.ledger();
+  private resolveTerms(recommendation: Recommendation, ledger: MemoryLedger) {
     const seen = new Set<string>();
     const candidates = [
       ...(recommendation.terms ?? []),
@@ -1411,6 +1410,19 @@ export class ProjectIdeasService {
             : null,
         };
       });
+  }
+
+  private termsView(recommendation: Recommendation) {
+    return this.resolveTerms(recommendation, this.store.ledger());
+  }
+
+  private pendingTermsCount(
+    recommendation: Recommendation,
+    ledger: MemoryLedger,
+  ) {
+    return this.resolveTerms(recommendation, ledger).filter(
+      (term) => !term.knowledge?.known,
+    ).length;
   }
 
   async answerKnowledge(input: unknown) {
@@ -1456,6 +1468,7 @@ export class ProjectIdeasService {
         .list("operations")
         .map((operation) => [operation.id, operation]),
     );
+    const ledger = this.store.ledger();
     return this.store
       .list("recommendations")
       .filter(
@@ -1480,6 +1493,7 @@ export class ProjectIdeasService {
           contentId: operation.contentId,
           rating: recommendation.rating?.score ?? null,
           contextRevoked: recommendation.contextRevoked,
+          pendingTermsCount: this.pendingTermsCount(recommendation, ledger),
         };
       });
   }
@@ -1635,14 +1649,12 @@ export class ProjectIdeasService {
     return {
       isolation,
       policySha256: this.deps.isolation.policySha256,
-      projects: this.store
-        .list("projects")
-        .map((project) => ({
-          id: project.id,
-          label: project.label,
-          status: project.status,
-          updatedAt: project.updatedAt,
-        })),
+      projects: this.store.list("projects").map((project) => ({
+        id: project.id,
+        label: project.label,
+        status: project.status,
+        updatedAt: project.updatedAt,
+      })),
       lastCatalog: last
         ? (JSON.parse(last) as { at: string; coverage: CatalogCoverage })
         : null,

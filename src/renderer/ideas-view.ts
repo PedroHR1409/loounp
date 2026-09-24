@@ -153,6 +153,7 @@ function renderFilters() {
 }
 
 function renderCard(item: IdeaHistoryItem) {
+  const pending = cardPendingLabel(item);
   const card = el(
     "button",
     {
@@ -171,6 +172,9 @@ function renderCard(item: IdeaHistoryItem) {
       el("span", { className: "chip", text: purposeLabels[item.purpose] }),
       item.contextRevoked
         ? el("span", { className: "chip", text: "contexto revogado" })
+        : null,
+      pending
+        ? el("span", { className: "chip chip-idea", text: pending })
         : null,
     ),
     el("span", { className: "idea-card-title", text: item.title }),
@@ -275,6 +279,23 @@ function renderComparisonBlock() {
   );
 }
 
+export function cardPendingLabel(item: IdeaHistoryItem): string | null {
+  if (item.pendingTermsCount <= 0) return null;
+  return item.pendingTermsCount === 1
+    ? "1 termo pendente"
+    : `${item.pendingTermsCount} termos pendentes`;
+}
+
+export function pendingTermsSummaryLabel(
+  items: IdeaHistoryItem[],
+): string | null {
+  const total = items.reduce((sum, item) => sum + item.pendingTermsCount, 0);
+  if (total <= 0) return null;
+  return total === 1
+    ? "Você tem 1 termo pendente de resposta."
+    : `Você tem ${total} termos pendentes de resposta.`;
+}
+
 function renderTerms(terms: IdeaTermView[]) {
   if (!terms.length) return null;
   const answer = (term: string, known: boolean) =>
@@ -295,7 +316,12 @@ function renderTerms(terms: IdeaTermView[]) {
           { className: "term-question" },
           el("span", { text: `Você já conhece ou já usou ${term.name}?` }),
           button("Sim", () => answer(term.name, true), "btn btn-sm", working),
-          button("Não", () => answer(term.name, false), "btn btn-sm", working),
+          button(
+            "Não",
+            () => answer(term.name, false),
+            "btn btn-sm",
+            working,
+          ),
         )
       : !memory.known
         ? el(
@@ -599,6 +625,7 @@ function renderDetail() {
 function render() {
   if (root().hidden) return;
   const visible = items.filter((item) => !filter || item.purpose === filter);
+  const pendingSummary = pendingTermsSummaryLabel(items);
   root().replaceChildren(
     ...[
       el(
@@ -615,6 +642,9 @@ function render() {
               ? el("p", {
                   text: `Atualizado às ${refreshedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`,
                 })
+              : null,
+            pendingSummary
+              ? el("p", { className: "panel-sub", text: pendingSummary })
               : null,
           ),
           el("button", {
