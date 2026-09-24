@@ -9,6 +9,10 @@
     "types": ["vite/client"],
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["src/renderer/**/*.ts", "src/preload/**/*.d.ts", "src/core/**/*.ts"],
+  "include": [
+    "src/renderer/**/*.ts",
+    "src/preload/**/*.d.ts",
+    "src/core/**/*.ts"
+  ],
   "exclude": ["src/**/*.test.ts"]
 }

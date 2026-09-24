@@ -3,22 +3,117 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'"
+    />
     <title>Loounp</title>
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <button type="button" class="brand" id="brand" aria-label="Loounp, ir para o feed"><span>L</span><svg class="brand-glasses" width="38" height="16" viewBox="0 0 38 16" fill="none" aria-hidden="true"><circle cx="9" cy="8.5" r="6.3" stroke="currentColor" stroke-width="2.6"></circle><circle cx="29" cy="8.5" r="6.3" stroke="currentColor" stroke-width="2.6"></circle><path d="M15.2 7.2c2.4-2 5.2-2 7.6 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg><span>unp</span></button>
+        <button
+          type="button"
+          class="brand"
+          id="brand"
+          aria-label="Loounp, ir para o feed"
+        >
+          <span>L</span
+          ><svg
+            class="brand-glasses"
+            width="38"
+            height="16"
+            viewBox="0 0 38 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="9"
+              cy="8.5"
+              r="6.3"
+              stroke="currentColor"
+              stroke-width="2.6"
+            ></circle>
+            <circle
+              cx="29"
+              cy="8.5"
+              r="6.3"
+              stroke="currentColor"
+              stroke-width="2.6"
+            ></circle>
+            <path
+              d="M15.2 7.2c2.4-2 5.2-2 7.6 0"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            ></path></svg
+          ><span>unp</span>
+        </button>
         <nav class="nav" aria-label="Principal">
-          <button type="button" class="nav-item active" id="open-feed" aria-current="page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg><span class="nav-label">Feed</span><span class="nav-count" id="count-feed"></span></button>
-          <button type="button" class="nav-item" id="open-ideas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"></path></svg><span class="nav-label">Ideias</span><span class="nav-count" id="count-ideas"></span></button>
-          <button type="button" class="nav-item" id="open-context"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg><span class="nav-label">Contexto</span></button>
+          <button
+            type="button"
+            class="nav-item active"
+            id="open-feed"
+            aria-current="page"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16M4 12h16M4 18h10"></path></svg
+            ><span class="nav-label">Feed</span
+            ><span class="nav-count" id="count-feed"></span>
+          </button>
+          <button type="button" class="nav-item" id="open-ideas">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
+              ></path></svg
+            ><span class="nav-label">Ideias</span
+            ><span class="nav-count" id="count-ideas"></span>
+          </button>
+          <button type="button" class="nav-item" id="open-context">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 5-9 5-9-5 9-5z"></path>
+              <path d="M3 13l9 5 9-5"></path></svg
+            ><span class="nav-label">Contexto</span>
+          </button>
         </nav>
         <div class="sidebar-foot">
-          <div class="local-status"><span class="local-dot"></span>Tudo local</div>
+          <div class="local-status">
+            <span class="local-dot"></span>Tudo local
+          </div>
           <p>Perfil, feed e ideias ficam neste computador.</p>
-          <button type="button" class="link-button" id="open-settings">Ajustar interesses</button>
+          <button type="button" class="link-button" id="open-settings">
+            Ajustar interesses
+          </button>
         </div>
       </aside>
       <main class="main">
@@ -28,21 +123,75 @@
               <div class="feed-head-row">
                 <div>
                   <h1>Para você</h1>
-                  <p class="feed-sub"><span id="last-refresh">Nenhuma busca ainda</span> · <span id="ranking-status">ranking base</span></p>
+                  <p class="feed-sub">
+                    <span id="last-refresh">Nenhuma busca ainda</span> ·
+                    <span id="ranking-status">ranking base</span>
+                  </p>
                 </div>
-                <button type="button" class="btn" id="refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"></path></svg><span>Buscar novos</span></button>
+                <button type="button" class="btn" id="refresh">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"></path></svg
+                  ><span>Buscar novos</span>
+                </button>
               </div>
               <div class="tabs" role="tablist" aria-label="Filtro do feed">
-                <button type="button" class="tab active" role="tab" aria-selected="true" data-filter="all">Todos <span id="count-all">0</span></button>
-                <button type="button" class="tab" role="tab" aria-selected="false" data-filter="saved">Salvos <span id="count-saved">0</span></button>
-                <button type="button" class="tab" role="tab" aria-selected="false" data-filter="ideas">Com ideia <span id="count-with-ideas">0</span></button>
+                <button
+                  type="button"
+                  class="tab active"
+                  role="tab"
+                  aria-selected="true"
+                  data-filter="all"
+                >
+                  Todos <span id="count-all">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab"
+                  role="tab"
+                  aria-selected="false"
+                  data-filter="saved"
+                >
+                  Salvos <span id="count-saved">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab"
+                  role="tab"
+                  aria-selected="false"
+                  data-filter="ideas"
+                >
+                  Com ideia <span id="count-with-ideas">0</span>
+                </button>
               </div>
-              <details id="discovery-diagnostics" class="diagnostics" hidden></details>
+              <details
+                id="discovery-diagnostics"
+                class="diagnostics"
+                hidden
+              ></details>
             </header>
             <div id="feed" class="feed-list"></div>
           </section>
-          <section id="reading-pane" class="reading-pane" aria-label="Leitura"></section>
-          <section id="idea-panel" class="idea-panel" aria-label="Nova ideia" hidden></section>
+          <section
+            id="reading-pane"
+            class="reading-pane"
+            aria-label="Leitura"
+          ></section>
+          <section
+            id="idea-panel"
+            class="idea-panel"
+            aria-label="Nova ideia"
+            hidden
+          ></section>
         </div>
         <div id="ideas-view" class="page" hidden></div>
         <div id="context-view" class="page" hidden></div>
@@ -50,37 +199,190 @@
     </div>
     <dialog id="settings-dialog">
       <form method="dialog" id="settings-form">
-        <div class="dialog-head"><div><div class="eyebrow">SEU MAPA DE INTERESSES</div><h2>O que você quer acompanhar?</h2></div><button class="close-button" value="cancel" aria-label="Fechar">×</button></div>
-        <p class="dialog-copy">Descreva o que deseja descobrir e use exemplos para ensinar o tipo de conteúdo que é útil para você.</p>
-        <section class="discovery-editor" aria-labelledby="discovery-heading">
-          <h3 id="discovery-heading">O que você quer aprender, construir ou acompanhar?</h3>
-          <textarea id="intent-text" rows="3" maxlength="4000" placeholder="Ex.: Quero descobrir projetos práticos de IA e agentes, além de técnicas de engenharia de dados que eu possa aplicar no Fabric. Prefiro guias com decisões e exemplos concretos."></textarea>
-          <div class="example-grid">
-            <div><label for="positive-examples">Exemplos que você gosta <span>um link ou descrição por linha</span></label><textarea id="positive-examples" rows="3" maxlength="12000" placeholder="https://medium.com/...&#10;Construções de agentes com loop determinístico e exemplos de código"></textarea></div>
-            <div><label for="negative-examples">Exemplos que não ajudam <span>um link ou descrição por linha</span></label><textarea id="negative-examples" rows="3" maxlength="12000" placeholder="https://dev.to/...&#10;Anúncios superficiais que só repetem buzzwords"></textarea></div>
+        <div class="dialog-head">
+          <div>
+            <div class="eyebrow">SEU MAPA DE INTERESSES</div>
+            <h2>O que você quer acompanhar?</h2>
           </div>
-          <p class="privacy-note">Ao pedir uma sugestão, o texto e os exemplos escolhidos serão enviados à OpenAI. Para links de fontes compatíveis, o app busca somente título e descrição pública; não busca artigos completos nem contorna paywalls.</p>
-          <button type="button" class="button button-outline" id="propose-interests">Sugerir meu mapa de interesses</button>
-          <div id="proposal-status" class="proposal-status" role="status" aria-live="polite"></div>
+          <button class="close-button" value="cancel" aria-label="Fechar">
+            ×
+          </button>
+        </div>
+        <p class="dialog-copy">
+          Descreva o que deseja descobrir e use exemplos para ensinar o tipo de
+          conteúdo que é útil para você.
+        </p>
+        <section class="discovery-editor" aria-labelledby="discovery-heading">
+          <h3 id="discovery-heading">
+            O que você quer aprender, construir ou acompanhar?
+          </h3>
+          <textarea
+            id="intent-text"
+            rows="3"
+            maxlength="4000"
+            placeholder="Ex.: Quero descobrir projetos práticos de IA e agentes, além de técnicas de engenharia de dados que eu possa aplicar no Fabric. Prefiro guias com decisões e exemplos concretos."
+          ></textarea>
+          <div class="example-grid">
+            <div>
+              <label for="positive-examples"
+                >Exemplos que você gosta
+                <span>um link ou descrição por linha</span></label
+              ><textarea
+                id="positive-examples"
+                rows="3"
+                maxlength="12000"
+                placeholder="https://medium.com/...&#10;Construções de agentes com loop determinístico e exemplos de código"
+              ></textarea>
+            </div>
+            <div>
+              <label for="negative-examples"
+                >Exemplos que não ajudam
+                <span>um link ou descrição por linha</span></label
+              ><textarea
+                id="negative-examples"
+                rows="3"
+                maxlength="12000"
+                placeholder="https://dev.to/...&#10;Anúncios superficiais que só repetem buzzwords"
+              ></textarea>
+            </div>
+          </div>
+          <p class="privacy-note">
+            Ao pedir uma sugestão, o texto e os exemplos escolhidos serão
+            enviados à OpenAI. Para links de fontes compatíveis, o app busca
+            somente título e descrição pública; não busca artigos completos nem
+            contorna paywalls.
+          </p>
+          <button
+            type="button"
+            class="button button-outline"
+            id="propose-interests"
+          >
+            Sugerir meu mapa de interesses
+          </button>
+          <div
+            id="proposal-status"
+            class="proposal-status"
+            role="status"
+            aria-live="polite"
+          ></div>
         </section>
-        <p class="section-caption">Revise e edite seus temas antes de salvar. Uma avaliação negativa de um artigo não remove o tema relacionado.</p>
-        <label for="topics">Temas e importância <span>1 = ocasional · 5 = essencial</span></label>
+        <p class="section-caption">
+          Revise e edite seus temas antes de salvar. Uma avaliação negativa de
+          um artigo não remove o tema relacionado.
+        </p>
+        <label for="topics"
+          >Temas e importância <span>1 = ocasional · 5 = essencial</span></label
+        >
         <div id="topic-rows"></div>
-        <button type="button" class="add-topic" id="add-topic">+ Adicionar tema</button>
-        <label for="medium-feeds">Feeds RSS do Medium <span>um endereço por linha</span></label>
-        <textarea id="medium-feeds" rows="3" placeholder="https://medium.com/feed/tag/artificial-intelligence"></textarea>
-        <section class="ai-box archive-box" aria-label="Importar histórico do Medium">
+        <button type="button" class="add-topic" id="add-topic">
+          + Adicionar tema
+        </button>
+        <label for="medium-feeds"
+          >Feeds RSS do Medium <span>um endereço por linha</span></label
+        >
+        <textarea
+          id="medium-feeds"
+          rows="3"
+          placeholder="https://medium.com/feed/tag/artificial-intelligence"
+        ></textarea>
+        <section
+          class="ai-box archive-box"
+          aria-label="Importar histórico do Medium"
+        >
           <strong>Aprender com seu Medium</strong>
-          <p>Importe o ZIP exportado pelo Medium. O Loounp usa artigos salvos como intenção de leitura e claps como sinal positivo forte. O arquivo é processado neste dispositivo; sessões e dados de perfil são ignorados.</p>
-          <button type="button" class="button button-outline" id="preview-medium-archive">Selecionar exportação ZIP</button>
+          <p>
+            Importe o ZIP exportado pelo Medium. O Loounp usa artigos salvos
+            como intenção de leitura e claps como sinal positivo forte. O
+            arquivo é processado neste dispositivo; sessões e dados de perfil
+            são ignorados.
+          </p>
+          <button
+            type="button"
+            class="button button-outline"
+            id="preview-medium-archive"
+          >
+            Selecionar exportação ZIP
+          </button>
           <div id="medium-archive-preview" hidden></div>
-          <button type="button" class="button button-dark" id="confirm-medium-archive" disabled>Importar sinais</button>
+          <button
+            type="button"
+            class="button button-dark"
+            id="confirm-medium-archive"
+            disabled
+          >
+            Importar sinais
+          </button>
         </section>
-        <label for="recency">Equilíbrio entre novidade e conteúdo duradouro <span id="recency-label">55% novidade</span></label>
+        <label for="recency"
+          >Equilíbrio entre novidade e conteúdo duradouro
+          <span id="recency-label">55% novidade</span></label
+        >
         <input id="recency" type="range" min="0" max="100" value="55" />
-        <div class="ai-box"><div><strong>Resumo e análise editorial com GPT-5.6 Luna</strong><p>A IA recebe apenas título e trecho disponível. O feed funciona sem ela.</p></div><div class="ai-key-row"><input id="api-key" type="password" placeholder="Chave de API (opcional)" autocomplete="off"/><button type="button" class="button button-outline" id="save-key">Salvar chave</button></div><button type="button" class="remove-key" id="remove-key">Remover chave salva</button></div>
-        <div class="ai-box jev-box"><div><strong>Avaliação de utilidade e profundidade pelo Jev (TypeSafe)</strong><p>Ao buscar conteúdo, o Jev avalia os artigos e seus resultados tipados orientam o ranking. Título, trecho e contexto mínimo dos seus objetivos são enviados diretamente à TypeSafe e podem consumir créditos. Em caso de indisponibilidade, o Loounp mantém o ranking de referência. <a href="https://console.typesafe.ai/login" target="_blank" rel="noreferrer">Abrir console TypeSafe</a></p></div><div class="ai-key-row"><input id="jev-key" type="password" placeholder="Chave API TypeSafe (opcional)" autocomplete="off"/><button type="button" class="button button-outline" id="save-jev-key">Salvar chave</button></div><button type="button" class="remove-key" id="remove-jev-key">Remover chave salva</button></div>
-        <div class="dialog-actions"><span>Seu perfil e histórico ficam locais.</span><button class="button button-dark" id="save-profile" value="save">Salvar interesses</button></div>
+        <div class="ai-box">
+          <div>
+            <strong>Resumo e análise editorial com GPT-5.6 Luna</strong>
+            <p>
+              A IA recebe apenas título e trecho disponível. O feed funciona sem
+              ela.
+            </p>
+          </div>
+          <div class="ai-key-row">
+            <input
+              id="api-key"
+              type="password"
+              placeholder="Chave de API (opcional)"
+              autocomplete="off"
+            /><button type="button" class="button button-outline" id="save-key">
+              Salvar chave
+            </button>
+          </div>
+          <button type="button" class="remove-key" id="remove-key">
+            Remover chave salva
+          </button>
+        </div>
+        <div class="ai-box jev-box">
+          <div>
+            <strong
+              >Avaliação de utilidade e profundidade pelo Jev (TypeSafe)</strong
+            >
+            <p>
+              Ao buscar conteúdo, o Jev avalia os artigos e seus resultados
+              tipados orientam o ranking. Título, trecho e contexto mínimo dos
+              seus objetivos são enviados diretamente à TypeSafe e podem
+              consumir créditos. Em caso de indisponibilidade, o Loounp mantém o
+              ranking de referência.
+              <a
+                href="https://console.typesafe.ai/login"
+                target="_blank"
+                rel="noreferrer"
+                >Abrir console TypeSafe</a
+              >
+            </p>
+          </div>
+          <div class="ai-key-row">
+            <input
+              id="jev-key"
+              type="password"
+              placeholder="Chave API TypeSafe (opcional)"
+              autocomplete="off"
+            /><button
+              type="button"
+              class="button button-outline"
+              id="save-jev-key"
+            >
+              Salvar chave
+            </button>
+          </div>
+          <button type="button" class="remove-key" id="remove-jev-key">
+            Remover chave salva
+          </button>
+        </div>
+        <div class="dialog-actions">
+          <span>Seu perfil e histórico ficam locais.</span
+          ><button class="button button-dark" id="save-profile" value="save">
+            Salvar interesses
+          </button>
+        </div>
       </form>
     </dialog>
     <div id="toast" role="status" aria-live="polite"></div>
