@@ -34,6 +34,6 @@ As chaves são criptografadas pelo armazenamento seguro do sistema operacional e
 ## Limites conhecidos
 
 - A descoberta do Dev.to usa um conjunto pequeno de tags derivadas dos temas e pode não reconhecer sinônimos customizados.
-- O Medium oferece somente o conteúdo presente nos feeds RSS adicionados; artigos pagos podem ter descrição incompleta.
+- O Medium oferece somente o conteúdo presente nos feeds RSS adicionados; artigos pagos podem ter descrição incompleta. Para gerar uma ideia de projeto a partir de um artigo pago que você consegue ler, use **Colar texto completo** e cole o conteúdo do artigo.
 - O enriquecimento por IA é opcional e sob demanda. Sem credenciais, o feed ainda busca, classifica heurísticamente, ordena e registra feedback.
 - A POC não integra X ou LinkedIn, não faz scraping, não treina modelos e não calcula embeddings.

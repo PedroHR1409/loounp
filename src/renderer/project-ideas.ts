@@ -87,7 +87,7 @@ function renderArticleStep() {
   const captured = operation.article
   const needsText = operation.state === 'awaiting_article_text'
   const incomplete = needsText || (captured && (captured.coverage === 'partial' || captured.coverage === 'metadata_only'))
-  const text = el('textarea', { attrs: { rows: '6', maxlength: '160000', placeholder: 'Cole aqui o texto completo do artigo (mínimo de 200 caracteres).', 'aria-label': 'Texto do artigo' } })
+  const text = el('textarea', { attrs: { rows: '6', maxlength: '160000', placeholder: 'Cole aqui o texto completo do artigo (mínimo de 200 caracteres). Útil para artigos pagos do Medium, que chegam incompletos pelo RSS.', 'aria-label': 'Texto do artigo' } })
   const paste = el('div', { attrs: { style: 'display: flex; flex-direction: column; gap: 8px' } }, text,
     button('Usar este texto', () => void act(async () => { view = await api().submitText({ operationId: operation.id, text: text.value }); pasteOpen = false }), 'btn', working))
   const status = incomplete
