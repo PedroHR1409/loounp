@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const memory = vi.hoisted(() => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IPC mock: each channel has its own handler signature
   handlers: new Map<string, (...args: any[]) => any>(),
   settings: new Map<string, string>(),
   content: [] as Array<{ data: string }>,
@@ -28,6 +29,7 @@ vi.mock("electron", () => ({
     loadFile = vi.fn();
   },
   ipcMain: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IPC mock: each channel has its own handler signature
     handle: (name: string, handler: (...args: any[]) => any) =>
       memory.handlers.set(name, handler),
   },
