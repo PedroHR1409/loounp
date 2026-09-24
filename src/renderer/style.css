@@ -1445,12 +1445,17 @@ dialog::backdrop {
 .topic-row {
   display: grid;
   grid-template-columns: 1fr 160px 40px 36px;
-  gap: 10px;
+  grid-template-rows: auto auto;
+  gap: 6px 10px;
   align-items: center;
   margin-top: 6px;
 }
 .topic-row input[type="range"] {
   accent-color: var(--cobalt);
+}
+.topic-synonyms {
+  grid-column: 1 / -1;
+  font-size: 13px;
 }
 .topic-value {
   font-size: 12px;

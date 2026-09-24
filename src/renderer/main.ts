@@ -521,7 +521,7 @@ void window.projectIdeas
       if (state) render();
     }
     const key = `loounp:interrupted:${current.operation.id}`;
-    let seen = false;
+    let seen: boolean;
     try {
       seen = localStorage.getItem(key) === "1";
     } catch {
@@ -534,7 +534,7 @@ void window.projectIdeas
       try {
         localStorage.setItem(key, "1");
       } catch {
-        seen = true;
+        /* localStorage indisponível; a notificação pode repetir */
       }
     }
   })
@@ -554,6 +554,13 @@ function renderDiscoveryDiagnostics() {
   element.innerHTML = `<summary>Última busca: ${stats.added} novos · ${stats.ranked} no feed${stats.errors ? ` · ${stats.errors} falha(s)` : ""}</summary><span>Recebidos: Dev.to ${stats.devtoFetched} · Medium ${stats.mediumFetched}; ${stats.uniqueFetched} únicos, ${stats.duplicatesRemoved} duplicatas.</span><span>${stats.awaitingAssessment} aguardam análise temática; ${stats.withoutTopicMatch} não casaram com os temas; ${stats.exploratory} entraram como descoberta adjacente; ${stats.jevZeroUtility} com utilidade Jev zero.</span>`;
 }
 
+function parseSynonyms(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((term) => term.trim())
+    .filter(Boolean);
+}
+
 function addTopic(
   name = "",
   importance = 3,
@@ -562,7 +569,8 @@ function addTopic(
   const row = document.createElement("div");
   row.className = "topic-row";
   if (metadata) topicMetadata.set(row, metadata);
-  row.innerHTML = `<input type="text" maxlength="70" placeholder="Ex.: Agentes de IA" value="${escapeHtml(name)}"><input aria-label="Importância do tema" type="range" min="1" max="5" value="${importance}"><span class="topic-value">${importance}/5</span><button type="button" class="remove-topic" aria-label="Remover tema">×</button>`;
+  const synonyms = (metadata?.retrievalTerms.devtoTags ?? []).join(", ");
+  row.innerHTML = `<input type="text" class="topic-name" maxlength="70" placeholder="Ex.: Agentes de IA" value="${escapeHtml(name)}"><input aria-label="Importância do tema" type="range" min="1" max="5" value="${importance}"><span class="topic-value">${importance}/5</span><button type="button" class="remove-topic" aria-label="Remover tema">×</button><input type="text" class="topic-synonyms" maxlength="240" placeholder="Tags alternativas p/ Dev.to (opcional), ex.: dataengineering, bigdata" value="${escapeHtml(synonyms)}">`;
   row.querySelector("input[type=range]")!.addEventListener("input", (event) => {
     row.querySelector(".topic-value")!.textContent =
       `${(event.target as HTMLInputElement).value}/5`;
@@ -732,7 +740,7 @@ document
     const rows = [...document.querySelectorAll<HTMLElement>(".topic-row")];
     const topics = rows
       .map((row) => ({
-        name: (row.querySelector("input[type=text]") as HTMLInputElement).value,
+        name: (row.querySelector(".topic-name") as HTMLInputElement).value,
         importance: Number(
           (row.querySelector("input[type=range]") as HTMLInputElement).value,
         ),
@@ -761,7 +769,7 @@ document
           const input = topics.find(
             (topic) =>
               topic.name ===
-              (row.querySelector("input[type=text]") as HTMLInputElement).value,
+              (row.querySelector(".topic-name") as HTMLInputElement).value,
           );
           if (!input) return [];
           const previous =
@@ -769,6 +777,9 @@ document
             previousGroups.get(input.name.toLowerCase());
           const id =
             previous?.id ?? `interest-${crypto.randomUUID().slice(0, 8)}`;
+          const devtoTags = parseSynonyms(
+            (row.querySelector(".topic-synonyms") as HTMLInputElement).value,
+          );
           return [
             {
               ...(previous ?? {
@@ -780,6 +791,10 @@ document
               id,
               label: input.name,
               priority: input.importance,
+              retrievalTerms: {
+                devtoTags,
+                mediumTopics: previous?.retrievalTerms.mediumTopics ?? [],
+              },
             },
           ];
         });
