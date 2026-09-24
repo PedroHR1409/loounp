@@ -863,6 +863,38 @@ describe("article-to-project orchestration", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("reports an active operation only while something is running, not while waiting on the user (data import AT-009)", async () => {
+    const svc = service({
+      readArticle: async () => {
+        const { ArticleFetchError } = await import("./project-article-reader");
+        throw new ArticleFetchError("A página respondeu com status 403.");
+      },
+    });
+    expect(svc.hasActiveOperation()).toBe(false);
+    const view = await svc.start({
+      url: "https://medium.com/p/x",
+      purpose: "both",
+    });
+    expect(view!.operation.state).toBe("awaiting_article_text");
+    expect(svc.hasActiveOperation()).toBe(false);
+    const reviewing = await svc.submitText({
+      operationId: view!.operation.id,
+      text: articleText,
+    });
+    expect(reviewing.operation.state).toBe("awaiting_consent");
+    expect(svc.hasActiveOperation()).toBe(false);
+    const operation = store.get("operations", view!.operation.id)!;
+    await store.mutate((tx) =>
+      tx.put(
+        "operations",
+        { ...operation, state: "generating" },
+        null,
+        operation.createdAt,
+      ),
+    );
+    expect(svc.hasActiveOperation()).toBe(true);
+  });
+
   it("asks for pasted text when the page cannot be read (AT-03)", async () => {
     const svc = service({
       readArticle: async () => {

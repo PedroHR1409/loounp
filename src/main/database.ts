@@ -1,17 +1,28 @@
 import { app } from "electron";
-import initSqlJs, { type Database as SqlDatabase } from "sql.js";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import initSqlJs, {
+  type Database as SqlDatabase,
+  type SqlJsStatic,
+} from "sql.js";
+import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
+import { atomicWrite } from "./project-context-store";
 
 const require = createRequire(import.meta.url);
+let SQL: SqlJsStatic;
 let database: SqlDatabase;
 let databasePath: string;
 
-export async function openDatabase(): Promise<void> {
-  databasePath = join(app.getPath("userData"), "content-discovery.sqlite");
+export type ContentTable =
+  "content" | "feedback" | "medium_archive_signals" | "settings";
+type SqlParams = (string | number | null | Uint8Array)[];
+
+export async function openDatabase(
+  baseDirectory: string = app.getPath("userData"),
+): Promise<void> {
+  databasePath = join(baseDirectory, "content-discovery.sqlite");
   await mkdir(dirname(databasePath), { recursive: true });
-  const SQL = await initSqlJs({
+  SQL = await initSqlJs({
     locateFile: (file) => require.resolve(`sql.js/dist/${file}`),
   });
   try {
@@ -36,13 +47,17 @@ export async function openDatabase(): Promise<void> {
 }
 
 export async function persist(): Promise<void> {
-  await writeFile(databasePath, Buffer.from(database.export()));
+  await atomicWrite(databasePath, database.export());
+}
+
+export function databaseFile(): string {
+  return databasePath;
 }
 
 export function all<T>(sql: string, params: unknown[] = []): T[] {
   const statement = database.prepare(sql);
   try {
-    statement.bind(params as (string | number | null | Uint8Array)[]);
+    statement.bind(params as SqlParams);
     const rows: T[] = [];
     while (statement.step()) rows.push(statement.getAsObject() as T);
     return rows;
@@ -52,7 +67,33 @@ export function all<T>(sql: string, params: unknown[] = []): T[] {
 }
 
 export function run(sql: string, params: unknown[] = []): void {
-  database.run(sql, params as (string | number | null | Uint8Array)[]);
+  database.run(sql, params as SqlParams);
+}
+
+export function dumpTable<T>(table: ContentTable): T[] {
+  return all<T>(`SELECT * FROM ${table}`);
+}
+
+export function transaction(
+  fn: (run: (sql: string, params?: unknown[]) => void) => void,
+): void {
+  database.run("BEGIN");
+  try {
+    fn((sql, params = []) => database.run(sql, params as SqlParams));
+    database.run("COMMIT");
+  } catch (error) {
+    database.run("ROLLBACK");
+    throw error;
+  }
+}
+
+export function exportBytes(): Uint8Array {
+  return database.export();
+}
+
+export function restoreBytes(bytes: Uint8Array): void {
+  database.close();
+  database = new SQL.Database(bytes);
 }
 
 export function getSetting(key: string): string | null {

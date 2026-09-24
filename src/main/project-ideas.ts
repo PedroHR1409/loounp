@@ -169,6 +169,15 @@ export class ProjectIdeasService {
     );
   }
 
+  hasActiveOperation(): boolean {
+    const state = this.activeOperation()?.state;
+    return (
+      state !== undefined &&
+      state !== "awaiting_consent" &&
+      state !== "awaiting_article_text"
+    );
+  }
+
   private requireOperation(operationId: string): Operation {
     const operation = this.store.get("operations", operationId);
     if (!operation) throw new ContractError("Operação não encontrada.");

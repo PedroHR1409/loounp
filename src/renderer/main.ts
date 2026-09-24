@@ -992,6 +992,101 @@ document
     }
   });
 
+const backupError = (error: unknown) =>
+  String((error as Error)?.message ?? error).replace(
+    /^(Error: )?Error invoking remote method '[^']+': (\w*Error: )?/,
+    "",
+  );
+
+const backupSummary = (counts: BackupCounts) => {
+  const parts = [
+    `${counts.articles} artigos no catálogo`,
+    `${counts.feedback} avaliações e interações`,
+    `${counts.mediumSignals} sinais do Medium`,
+  ];
+  if (counts.projectContextIncluded)
+    parts.push(
+      `${counts.ideas} ideias`,
+      `${counts.memories} memórias`,
+      `${counts.ignoredSources} fontes ignoradas`,
+    );
+  return `${parts.join(" · ")}.${counts.projectContextIncluded ? "" : " Ideias e memória não estão neste arquivo."}`;
+};
+
+document
+  .querySelector<HTMLButtonElement>("#export-data")!
+  .addEventListener("click", async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    button.disabled = true;
+    try {
+      const result = await window.contentApp.exportData();
+      if (result)
+        notify(
+          `Backup salvo em ${result.path}. ${backupSummary(result.counts)}`,
+        );
+    } catch (error) {
+      notify(backupError(error));
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+let dataImportReady = false;
+document
+  .querySelector<HTMLButtonElement>("#preview-data-import")!
+  .addEventListener("click", async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const preview = document.querySelector<HTMLElement>(
+      "#data-import-preview",
+    )!;
+    const confirm = document.querySelector<HTMLButtonElement>(
+      "#confirm-data-import",
+    )!;
+    button.disabled = true;
+    confirm.disabled = true;
+    dataImportReady = false;
+    preview.hidden = false;
+    preview.textContent = "Validando o backup…";
+    try {
+      const result = await window.contentApp.previewDataImport();
+      if (!result) {
+        preview.hidden = true;
+        return;
+      }
+      preview.replaceChildren();
+      const summary = document.createElement("div");
+      summary.textContent = `Backup de ${new Date(result.exportedAt).toLocaleString("pt-BR")} (Loounp ${result.appVersion}): ${backupSummary(result.counts)}`;
+      const warning = document.createElement("p");
+      warning.textContent =
+        "Importar substitui os dados atuais deste computador. Antes disso, uma cópia .bak de cada banco é salva na pasta de dados do app. Chaves de API configuradas aqui são mantidas.";
+      preview.append(summary, warning);
+      dataImportReady = true;
+      confirm.disabled = false;
+    } catch (error) {
+      preview.textContent = backupError(error);
+    } finally {
+      button.disabled = false;
+    }
+  });
+document
+  .querySelector<HTMLButtonElement>("#confirm-data-import")!
+  .addEventListener("click", async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    if (!dataImportReady) return;
+    button.disabled = true;
+    dataImportReady = false;
+    const preview = document.querySelector<HTMLElement>(
+      "#data-import-preview",
+    )!;
+    try {
+      const result = await window.contentApp.commitDataImport();
+      preview.textContent = `Dados importados. Cópias de segurança: ${result.backups.join(" · ")}. Recarregando…`;
+      setTimeout(() => location.reload(), 2500);
+    } catch (error) {
+      preview.textContent = backupError(error);
+    }
+  });
+
 document.querySelectorAll<HTMLButtonElement>(".tab").forEach((button) =>
   button.addEventListener("click", () => {
     activeFilter = (button.dataset.filter as Filter | undefined) ?? "all";

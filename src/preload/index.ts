@@ -22,6 +22,9 @@ contextBridge.exposeInMainWorld("contentApp", {
   clearJevKey: () => ipcRenderer.invoke("settings:clear-jev-key"),
   previewMediumArchive: () => ipcRenderer.invoke("medium-archive:preview"),
   importMediumArchive: () => ipcRenderer.invoke("medium-archive:commit"),
+  exportData: () => ipcRenderer.invoke("data:export"),
+  previewDataImport: () => ipcRenderer.invoke("data:import-preview"),
+  commitDataImport: () => ipcRenderer.invoke("data:import-commit"),
 });
 
 contextBridge.exposeInMainWorld("projectIdeas", {

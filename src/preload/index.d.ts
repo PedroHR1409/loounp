@@ -30,6 +30,16 @@ declare global {
         imported: number;
         learnedFrom: number;
       }>;
+      exportData: () => Promise<{ path: string; counts: BackupCounts } | null>;
+      previewDataImport: () => Promise<{
+        exportedAt: string;
+        appVersion: string;
+        counts: BackupCounts;
+      } | null>;
+      commitDataImport: () => Promise<{
+        backups: string[];
+        counts: BackupCounts;
+      }>;
     };
     projectIdeas: {
       start: (input: {
@@ -89,9 +99,7 @@ declare global {
         evaluationId: string,
         choice: "A" | "B" | "tie",
       ) => Promise<ComparisonView>;
-      refreshContext: (input: {
-        projectIds?: string[];
-      }) => Promise<{
+      refreshContext: (input: { projectIds?: string[] }) => Promise<{
         coverage: CatalogCoverageView;
         status: ProjectContextStatus;
       }>;
@@ -394,6 +402,18 @@ declare global {
     ranked: number;
     beyondFirstPage: number;
     errors: number;
+  };
+  type BackupCounts = {
+    articles: number;
+    feedback: number;
+    mediumSignals: number;
+    ideas: number;
+    capturedArticles: number;
+    evaluations: number;
+    ignoredSources: number;
+    memories: number;
+    forgottenMemories: number;
+    projectContextIncluded: boolean;
   };
   type MediumArchivePreview = {
     total: number;

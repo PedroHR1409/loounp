@@ -12,11 +12,16 @@ import { createHash } from "node:crypto";
 import OpenAI, { APIConnectionTimeoutError } from "openai";
 import {
   all,
+  databaseFile,
+  dumpTable,
+  exportBytes,
   getSetting,
   openDatabase,
   persist,
+  restoreBytes,
   run,
   setSetting,
+  transaction,
 } from "./database";
 import {
   fetchDevto,
@@ -43,9 +48,18 @@ import { assessContentBatch, proposeInterestProfile } from "./discovery";
 import { assessWithTypeSafe, createJevAssessment } from "./typesafe-jev";
 import { parseMediumArchive, type MediumArchiveItem } from "./medium-archive";
 import {
+  atomicWrite,
   DEFAULT_PROTECTED_ROOT,
   ProjectContextStore,
 } from "./project-context-store";
+import {
+  applyBackup,
+  buildBackup,
+  parseBackup,
+  summarize,
+  type BackupFile,
+  type ContentDbPort,
+} from "./data-backup";
 import {
   POLICY_SHA256,
   SandboxSupervisor,
@@ -102,6 +116,8 @@ const defaultProfile: UserProfile = {
 let mainWindow: BrowserWindow;
 let pendingMediumArchive: MediumArchiveItem[] | undefined;
 let projectIdeas: ProjectIdeasService | undefined;
+let contextStore: ProjectContextStore | undefined;
+let pendingBackup: BackupFile | undefined;
 let projectIdeasUnavailable = "A exploração de ideias ainda está iniciando.";
 
 function getProfile(): UserProfile {
@@ -675,6 +691,7 @@ ipcMain.handle(
       if (error instanceof APIConnectionTimeoutError)
         throw new Error(
           "A OpenAI não respondeu em 45 segundos. Confira a conexão e tente novamente.",
+          { cause: error },
         );
       throw error;
     }
@@ -931,13 +948,11 @@ ipcMain.handle("feed:refresh", async () => {
               })),
               positiveTraits: confirmed.positiveTraits,
               deprioritizeTraits: confirmed.deprioritizeTraits,
-              examples: confirmed.examples
-                .slice(0, 6)
-                .map((example) => ({
-                  polarity: example.polarity,
-                  title: example.title,
-                  excerpt: example.excerpt.slice(0, 500),
-                })),
+              examples: confirmed.examples.slice(0, 6).map((example) => ({
+                polarity: example.polarity,
+                title: example.title,
+                excerpt: example.excerpt.slice(0, 500),
+              })),
             },
             article: {
               title: item.title.slice(0, 500),
@@ -1210,6 +1225,68 @@ ipcMain.handle("content:analyze", async (_event, contentId: string) => {
   await persist();
 });
 
+const contentDbPort: ContentDbPort = {
+  databaseFile: () => databaseFile(),
+  dumpTable: (table) => dumpTable(table),
+  transaction: (fn) => transaction(fn),
+  exportBytes: () => exportBytes(),
+  restoreBytes: (bytes) => restoreBytes(bytes),
+  persist: () => persist(),
+};
+
+ipcMain.handle("data:export", async (event) => {
+  assertTrustedSender(event);
+  const target = await dialog.showSaveDialog(mainWindow, {
+    title: "Exportar dados do Loounp",
+    defaultPath: `loounp-backup-${new Date().toISOString().slice(0, 10)}.json`,
+    filters: [{ name: "Backup do Loounp", extensions: ["json"] }],
+  });
+  if (target.canceled || !target.filePath) return null;
+  const backup = buildBackup({
+    content: contentDbPort,
+    context: contextStore ?? null,
+    now: () => new Date(),
+    appVersion: app.getVersion(),
+  });
+  await atomicWrite(target.filePath, JSON.stringify(backup, null, 2));
+  return { path: target.filePath, counts: summarize(backup) };
+});
+ipcMain.handle("data:import-preview", async (event) => {
+  assertTrustedSender(event);
+  pendingBackup = undefined;
+  const selected = await dialog.showOpenDialog(mainWindow, {
+    title: "Selecionar backup do Loounp",
+    properties: ["openFile"],
+    filters: [{ name: "Backup do Loounp", extensions: ["json"] }],
+  });
+  if (selected.canceled || !selected.filePaths[0]) return null;
+  const backup = parseBackup(await readFile(selected.filePaths[0], "utf8"));
+  pendingBackup = backup;
+  return {
+    exportedAt: backup.exportedAt,
+    appVersion: backup.appVersion,
+    counts: summarize(backup),
+  };
+});
+ipcMain.handle("data:import-commit", async (event) => {
+  assertTrustedSender(event);
+  if (!pendingBackup)
+    throw new Error("Selecione e revise um backup antes de importar.");
+  if (projectIdeas?.hasActiveOperation())
+    throw new Error(
+      "Uma ideia está sendo gerada. Cancele ou aguarde a conclusão antes de importar.",
+    );
+  const backup = pendingBackup;
+  pendingBackup = undefined;
+  return applyBackup(backup, {
+    content: contentDbPort,
+    context: contextStore ?? null,
+    now: () => new Date(),
+    readFile: async (path) => new Uint8Array(await readFile(path)),
+    writeFile: atomicWrite,
+  });
+});
+
 function assertTrustedSender(event: IpcMainInvokeEvent) {
   if (
     !mainWindow ||
@@ -1281,6 +1358,7 @@ async function openProjectIdeas() {
     const store = await ProjectContextStore.open({
       baseDirectory: app.getPath("userData"),
     });
+    contextStore = store;
     const environment: SandboxEnvironment = {
       platform: process.platform,
       runtimeDirectory: join(store.directory, "runtime"),

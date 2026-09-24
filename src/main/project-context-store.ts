@@ -56,7 +56,7 @@ const entityTables = [
   "evaluations",
   "ignored_sources",
 ] as const;
-type EntityTable = (typeof entityTables)[number];
+export type EntityTable = (typeof entityTables)[number];
 type EntityMap = {
   operations: Operation;
   articles: ArticleSnapshot;
@@ -85,6 +85,21 @@ export type AuditEntry = {
   itemIds: string[];
   at: string;
 };
+
+export type RawEntityRow = {
+  id: string;
+  ref: string | null;
+  created_at: string;
+  data: string;
+};
+export type RawMemoryRevisionRow = {
+  memory_id: string;
+  revision: number;
+  state: string;
+  data: string;
+};
+export type RawMemoryTombstoneRow = { memory_id: string; forgotten_at: string };
+export type RawConfigRow = { key: string; value: string };
 
 export class StoreLocationError extends Error {}
 export class SchemaVersionError extends Error {}
@@ -268,6 +283,7 @@ export class ProjectContextStore {
         this.restore(snapshot);
         throw new Error(
           `Falha ao salvar o contexto local; a versão anterior foi preservada. ${String(error)}`,
+          { cause: error },
         );
       }
       return result;
@@ -280,6 +296,46 @@ export class ProjectContextStore {
   private restore(snapshot: Uint8Array) {
     this.database.close();
     this.database = new this.SQL.Database(snapshot);
+  }
+
+  get databaseFile(): string {
+    return this.databasePath;
+  }
+
+  replaceDatabase(bytes: Uint8Array): Promise<void> {
+    const run = async () => {
+      this.restore(bytes);
+      await this.flush();
+    };
+    const next = this.queue.then(run, run);
+    this.queue = next.catch(() => undefined);
+    return next;
+  }
+
+  dumpRaw(table: EntityTable): RawEntityRow[] {
+    return this.rows<RawEntityRow>(
+      `SELECT id, ref, created_at, data FROM ${table} ORDER BY created_at, id`,
+    );
+  }
+
+  dumpMemory(): {
+    revisions: RawMemoryRevisionRow[];
+    tombstones: RawMemoryTombstoneRow[];
+  } {
+    return {
+      revisions: this.rows<RawMemoryRevisionRow>(
+        "SELECT memory_id, revision, state, data FROM memory_revisions ORDER BY memory_id, revision",
+      ),
+      tombstones: this.rows<RawMemoryTombstoneRow>(
+        "SELECT memory_id, forgotten_at FROM memory_tombstones ORDER BY memory_id",
+      ),
+    };
+  }
+
+  dumpConfig(): RawConfigRow[] {
+    return this.rows<RawConfigRow>(
+      "SELECT key, value FROM config ORDER BY key",
+    );
   }
 
   private rows<T>(sql: string, params: (string | number | null)[] = []): T[] {
@@ -516,6 +572,53 @@ export class StoreTransaction {
         [tombstone.memoryId, tombstone.forgottenAt],
       );
     this.setConfig("memory_global_revision", String(ledger.globalRevision));
+  }
+
+  clear(table: EntityTable): void {
+    this.database.run(`DELETE FROM ${table}`);
+  }
+
+  replaceRaw(table: EntityTable, rows: RawEntityRow[]): void {
+    this.clear(table);
+    for (const row of rows)
+      this.database.run(
+        `INSERT INTO ${table}(id, ref, created_at, data) VALUES (?, ?, ?, ?)`,
+        [row.id, row.ref, row.created_at, row.data],
+      );
+  }
+
+  replaceMemory(
+    revisions: RawMemoryRevisionRow[],
+    tombstones: RawMemoryTombstoneRow[],
+  ): void {
+    this.database.run("DELETE FROM memory_revisions");
+    this.database.run("DELETE FROM memory_tombstones");
+    for (const row of revisions)
+      this.database.run(
+        "INSERT INTO memory_revisions(memory_id, revision, state, data) VALUES (?, ?, ?, ?)",
+        [row.memory_id, row.revision, row.state, row.data],
+      );
+    for (const row of tombstones)
+      this.database.run(
+        "INSERT INTO memory_tombstones(memory_id, forgotten_at) VALUES (?, ?)",
+        [row.memory_id, row.forgotten_at],
+      );
+  }
+
+  replaceConfig(rows: RawConfigRow[], keepLocal: ReadonlySet<string>): void {
+    const placeholders = [...keepLocal].map(() => "?").join(", ");
+    this.database.run(
+      keepLocal.size
+        ? `DELETE FROM config WHERE key NOT IN (${placeholders})`
+        : "DELETE FROM config",
+      [...keepLocal],
+    );
+    for (const row of rows)
+      if (!keepLocal.has(row.key))
+        this.database.run(
+          "INSERT OR REPLACE INTO config(key, value) VALUES (?, ?)",
+          [row.key, row.value],
+        );
   }
 
   removeOperationData(operationId: string): void {

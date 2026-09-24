@@ -377,6 +377,34 @@
             Remover chave salva
           </button>
         </div>
+        <section class="ai-box archive-box" aria-label="Backup dos dados">
+          <strong>Backup dos dados</strong>
+          <p>
+            Exporte perfil, catálogo, avaliações, ideias e memória para um
+            arquivo JSON, ou restaure um backup. O arquivo contém suas ideias,
+            memórias e trechos de código citados nelas: guarde em local seguro.
+            Chaves de API não são incluídas.
+          </p>
+          <button type="button" class="button button-outline" id="export-data">
+            Exportar dados
+          </button>
+          <button
+            type="button"
+            class="button button-outline"
+            id="preview-data-import"
+          >
+            Selecionar backup para importar
+          </button>
+          <div id="data-import-preview" hidden></div>
+          <button
+            type="button"
+            class="button button-dark"
+            id="confirm-data-import"
+            disabled
+          >
+            Substituir dados atuais
+          </button>
+        </section>
         <div class="dialog-actions">
           <span>Seu perfil e histórico ficam locais.</span
           ><button class="button button-dark" id="save-profile" value="save">
