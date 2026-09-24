@@ -1,0 +1,39 @@
+# Loounp — descoberta pessoal e ideias de projeto
+
+Aplicativo desktop local para testar se um mapa explícito de interesses, refinado por avaliações pessoais, encontra leituras mais úteis. A POC coleta artigos do Dev.to e feeds RSS do Medium, ordena o catálogo com regras explicáveis e registra feedback localmente.
+
+## Executar
+
+Requisitos: Node.js 20.19+ (ou 22.12+) e npm. Na primeira execução, o pacote Electron baixa o binário desktop correspondente ao sistema.
+
+```powershell
+npm install
+npm run dev
+```
+
+Para verificar ou preparar a versão compilada:
+
+```powershell
+npm run typecheck
+npm test
+npm run build
+npm start
+```
+
+## Usar a POC
+
+1. Abra **Ajustar meus interesses** e edite os temas e sua importância de 1 a 5. O perfil inicial traz exemplos editáveis.
+2. Ajuste as URLs de RSS do Medium (uma por linha) e o equilíbrio entre conteúdo recente e duradouro.
+3. Use **Buscar conteúdo** para consultar os temas no Dev.to e os feeds RSS configurados. A busca é manual e pode ser repetida.
+4. Abra artigos, salve para ler depois e use **Útil** / **Não** como avaliação explícita. Avaliações têm mais peso no ranking que abertura ou salvamento.
+5. Opcionalmente, configure uma chave OpenAI para gerar resumo e análise editorial com GPT-5.6 Luna. A análise usa apenas título e trecho disponível.
+6. Opcionalmente, configure uma chave Jev e use **Comparar com Jev** em artigos individuais. Essa classificação é um experimento paralelo, não muda o ranking, e pode consumir créditos da conta Jev.
+
+As chaves são criptografadas pelo armazenamento seguro do sistema operacional e usadas no processo principal. O perfil, catálogo e feedback ficam em SQLite sob o diretório de dados do app do usuário (`%APPDATA%\content-discovery-poc` no Windows). Não há conta, sincronização nem serviço remoto próprio.
+
+## Limites conhecidos
+
+- A descoberta do Dev.to usa um conjunto pequeno de tags derivadas dos temas e pode não reconhecer sinônimos customizados.
+- O Medium oferece somente o conteúdo presente nos feeds RSS adicionados; artigos pagos podem ter descrição incompleta.
+- O enriquecimento por IA é opcional e sob demanda. Sem credenciais, o feed ainda busca, classifica heurísticamente, ordena e registra feedback.
+- A POC não integra X ou LinkedIn, não faz scraping, não treina modelos e não calcula embeddings.

@@ -1,0 +1,45 @@
+{
+  "preRegisteredAt": "2026-09-23T20:42:38Z",
+  "description": "Gate 2 (DESIGN v1.1, seção 9): casos definidos antes da execução. Projetos fictícios com estrutura relacional: o componente a melhorar só é alcançável a partir do trecho lexicalmente relevante por uma relação de código.",
+  "criteria": {
+    "improvement": "O arquivo-alvo aparece nas evidências selecionadas com grafo e não aparece sem grafo.",
+    "validReferences": "Toda evidência referencia uma SourceVersion existente cujo arquivo pertence ao fixture; toda relação de grafo cita arquivos existentes.",
+    "pass": "Pelo menos 3 casos relacionais com melhoria, nenhuma referência inválida e o controle negativo sem evidência adicional atribuída ao grafo.",
+    "fail": "Caso contrário, a expansão pelo grafo fica experimental e desligada por padrão; a recuperação lexical continua.",
+    "cost": "Tempo do catálogo com e sem Graphify e tempo de recuperação são medidos e reportados, sem limite pré-definido."
+  },
+  "cases": [
+    {
+      "id": "C1",
+      "kind": "relational",
+      "title": "Circuit breakers para dependências instáveis",
+      "article": "Circuit breakers protect services from flaky downstream dependencies. When a payment provider times out repeatedly, the breaker opens, fails fast and later probes with a half-open state. This article shows how to wrap outbound HTTP calls with a breaker, track consecutive failures and add fallbacks so that timeouts in a downstream provider do not cascade.",
+      "lexicalEntry": "orders-api/src/payments.py",
+      "target": "orders-api/src/transport/policy.py"
+    },
+    {
+      "id": "C2",
+      "kind": "relational",
+      "title": "Cache de embeddings para reduzir custo de LLM",
+      "article": "Caching embeddings avoids paying twice for the same text. In retrieval augmented generation pipelines, questions and documents are embedded repeatedly; a content-addressed cache keyed by the hash of the text and the model name cuts latency and cost. We cover invalidation when the embedding model changes.",
+      "lexicalEntry": "notes-rag/src/pipeline.py",
+      "target": "notes-rag/src/encoder.py"
+    },
+    {
+      "id": "C3",
+      "kind": "relational",
+      "title": "Contratos de dados na ingestão",
+      "article": "Data contracts at ingestion time catch broken partner files before they reach the warehouse. Validate each row against a schema, reject or quarantine invalid records and report contract violations to the producer. The technique applies to CSV ingestion jobs that often break when partners change columns.",
+      "lexicalEntry": "etl-jobs/src/ingest.py",
+      "target": "etl-jobs/src/readers/rows.py"
+    },
+    {
+      "id": "N1",
+      "kind": "negative_control",
+      "title": "Animações CSS em landing pages",
+      "article": "CSS keyframe animations and transitions make landing pages feel alive. Use transform and opacity for smooth animations, respect prefers-reduced-motion and avoid layout thrashing with will-change.",
+      "lexicalEntry": null,
+      "target": null
+    }
+  ]
+}
