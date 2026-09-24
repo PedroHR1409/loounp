@@ -291,7 +291,7 @@ export type Recommendation = {
   promptVersion: string;
   model: string;
   createdAt: string;
-  rating: { score: number; comment: string } | null;
+  rating: { score: number; comment: string; clearLanguage?: boolean } | null;
   citedEvidence: Array<{
     id: string;
     label: string;
@@ -382,6 +382,11 @@ export const is = {
       throw new ContractError(`${path}: lista de até ${max} identificadores.`);
     return value.map((item, index) => is.id(item, `${path}[${index}]`));
   },
+  boolean: (value: unknown, path: string) => {
+    if (typeof value !== "boolean")
+      throw new ContractError(`${path}: booleano esperado.`);
+    return value;
+  },
 };
 
 export type StartInput = {
@@ -464,12 +469,14 @@ export type RateInput = {
   operationId: string;
   score: number;
   comment?: string;
+  clearLanguage?: boolean;
 };
 export function parseRateInput(input: unknown): RateInput {
   return strictObject<RateInput>(input, {
     operationId: is.id,
     score: is.integer(1, 5),
     comment: is.optional(is.text(2000)),
+    clearLanguage: is.optional(is.boolean),
   });
 }
 
@@ -497,9 +504,9 @@ export function buildGenerationPayload(
     "Não há ferramentas. Não invente problemas, arquivos, competências ou objetivos. Use apenas os IDs fornecidos ao citar evidências.",
     "Explique a contribuição concreta do artigo e a conexão com evidências de projeto ou objetivos confirmados. Termos coincidentes não provam necessidade.",
     'Ancore a ideia no contexto real do usuário: diga em qual projeto dele ela entra, o que esse projeto faz hoje em palavras simples e qual problema concreto a ideia resolve. Nunca cite nomes internos de código (classes, funções, módulos, arquivos) sem dizer onde estão e o que fazem. Uma ideia genérica, que serviria para qualquer pessoa, não serve: sem ligação concreta com um projeto ou objetivo do usuário, responda "insufficient_context".',
-    "Escreva como quem explica para um iniciante: frases curtas, voz ativa, palavras do dia a dia, sem empilhar conceitos na mesma frase. Pode usar termos técnicos, mas explique cada um na primeira vez (o que é e para que serve) com uma comparação simples.",
-    "summary: uma ou duas frases sem jargão dizendo o que a pessoa vai construir e o que ganha com isso. description: o problema de hoje, a ideia e um exemplo concreto de uso. firstVersion: de 3 a 5 passos pequenos e numerados.",
-    "terms: cada termo técnico, ferramenta, biblioteca ou técnica citada na ideia, com uma explicação de uma ou duas frases para leigos. Memórias do tipo knowledge dizem o que o usuário conhece ou não; termos que ele não conhece podem continuar na ideia, mas a explicação deve ser ainda mais simples e trazer um exemplo.",
+    'Escreva como quem explica para um iniciante completo, mesmo sem memória confirmando isso: frases curtas, voz ativa, palavras do dia a dia, uma ideia por frase. Nunca empilhe termos técnicos na mesma frase. Exemplo do que NÃO fazer: "Adicionar ao planner um ciclo de geração, avaliação e revisão do plano, com um avaliador estruturado e limite de iterações" (jargão empilhado, ninguém de fora entende). Prefira: "Depois que o programa monta um plano, peça para ele mesmo checar se esqueceu algo e tentar de novo, no máximo duas vezes." description, firstVersion, summary e stack têm que fazer sentido sozinhos, sem exigir que a pessoa procure a explicação em terms.',
+    'summary: uma ou duas frases sem jargão dizendo o que a pessoa vai construir e o que ganha com isso. description: o problema de hoje, a ideia e um exemplo concreto de uso. firstVersion: de 3 a 5 passos pequenos e numerados, cada um uma ação concreta que a pessoa reconhece (ex.: "confira se a resposta trouxe os campos X e Y" em vez de "valide a saída com um schema"); nunca descreva arquitetura interna (módulos, classes, ciclos, camadas) como se fosse óbvia.',
+    "terms: liste TODO nome de ferramenta, biblioteca, framework, padrão, classe, função ou arquivo citado em qualquer campo da resposta (title, summary, description, firstVersion, stack, reasons) — nada pode ficar de fora. Cada explicação tem no máximo duas frases simples, sem outro jargão dentro dela, e uma comparação do dia a dia. Memórias do tipo knowledge dizem o que o usuário já confirmou conhecer; para qualquer termo sem memória, assuma que a pessoa nunca ouviu falar e explique do zero.",
     'Se não houver contexto suficiente, responda status "insufficient_context". Se o artigo não oferecer aplicação convincente, responda "no_application". Ambos com motivo em limitations, também em linguagem simples.',
     'Responda somente JSON: {"status":"recommendation|insufficient_context|no_application","modality":"new|improvement|null","targetProjectId":"id ou null","title":"","summary":"","description":"","firstVersion":"","terms":[{"name":"","explanation":""}],"effort":{"estimate":"","assumptions":[""]}|null,"reasons":[{"text":"","evidenceIds":["id"],"inferred":false,"quote":"trecho literal curto da evidência ou vazio"}],"stack":[{"name":"","justification":""}],"limitations":[""]}',
   ].join("\n");

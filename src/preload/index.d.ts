@@ -88,6 +88,7 @@ declare global {
         operationId: string;
         score: number;
         comment?: string;
+        clearLanguage?: boolean;
       }) => Promise<IdeaView>;
       setModel: (input: {
         model: string;
@@ -269,7 +270,11 @@ declare global {
       limitations: string[];
       model: string;
       createdAt: string;
-      rating: { score: number; comment: string } | null;
+      rating: {
+        score: number;
+        comment: string;
+        clearLanguage?: boolean;
+      } | null;
       contextRevoked: boolean;
       citedEvidence: Array<{ id: string; label: string; excerpt: string }>;
     } | null;

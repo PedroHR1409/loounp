@@ -847,6 +847,47 @@ describe("article-to-project orchestration", () => {
     expect(store.list("recommendations")).toEqual([]);
   });
 
+  it("grava score e clareza juntos (LANGUAGE_QUALITY AT-001)", async () => {
+    const svc = service();
+    reply = async () => idea("Ideia a avaliar");
+    const { view } = await started(svc);
+    const done = await generate(svc, view);
+    const rated = await svc.rate({
+      operationId: done.operation.id,
+      score: 4,
+      clearLanguage: true,
+    });
+    expect(rated.recommendation?.rating).toMatchObject({
+      score: 4,
+      clearLanguage: true,
+    });
+  });
+
+  it("avaliação só com score continua válida, sem clareza (LANGUAGE_QUALITY AT-002)", async () => {
+    const svc = service();
+    reply = async () => idea("Ideia a avaliar");
+    const { view } = await started(svc);
+    const done = await generate(svc, view);
+    const rated = await svc.rate({ operationId: done.operation.id, score: 3 });
+    expect(rated.recommendation?.rating).toEqual({ score: 3, comment: "" });
+  });
+
+  it("ideia útil mas não clara guarda os dois sinais de forma independente (LANGUAGE_QUALITY AT-003)", async () => {
+    const svc = service();
+    reply = async () => idea("Ideia a avaliar");
+    const { view } = await started(svc);
+    const done = await generate(svc, view);
+    const rated = await svc.rate({
+      operationId: done.operation.id,
+      score: 5,
+      clearLanguage: false,
+    });
+    expect(rated.recommendation?.rating).toMatchObject({
+      score: 5,
+      clearLanguage: false,
+    });
+  });
+
   it("imports interest statements only as pending proposals", async () => {
     const svc = service();
     const listed = await svc.memoryPropose({ fromInterests: true });

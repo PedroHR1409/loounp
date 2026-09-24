@@ -1084,6 +1084,32 @@ h4 {
 .star:hover {
   border-color: var(--cobalt);
 }
+.clarity-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.clarity-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-size: 13px;
+  cursor: pointer;
+}
+.clarity-btn:hover:not(:disabled) {
+  border-color: var(--cobalt);
+}
+.clarity-btn.active {
+  border-color: var(--cobalt);
+  background: var(--cobalt-tint);
+  color: var(--cobalt-dark);
+}
+.clarity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .idea-foot .push {
   margin-left: auto;
 }

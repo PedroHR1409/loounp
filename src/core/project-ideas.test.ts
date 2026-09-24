@@ -4,6 +4,7 @@ import {
   ContractError,
   parseAuthorizeInput,
   parseModelJson,
+  parseRateInput,
   parseRemoveItemInput,
   parseSetPurposeInput,
   parseStartInput,
@@ -145,6 +146,33 @@ describe("IPC contracts", () => {
         operationId: "op_00000001",
         packageId: "pkg_00000001",
         purpose: "fun",
+      }),
+    ).toThrow(ContractError);
+  });
+
+  it("accepts an optional boolean clarity signal on rating, independent of the score", () => {
+    expect(
+      parseRateInput({ operationId: "op_00000001", score: 4 }).clearLanguage,
+    ).toBeUndefined();
+    expect(
+      parseRateInput({
+        operationId: "op_00000001",
+        score: 4,
+        clearLanguage: true,
+      }).clearLanguage,
+    ).toBe(true);
+    expect(
+      parseRateInput({
+        operationId: "op_00000001",
+        score: 4,
+        clearLanguage: false,
+      }).clearLanguage,
+    ).toBe(false);
+    expect(() =>
+      parseRateInput({
+        operationId: "op_00000001",
+        score: 4,
+        clearLanguage: "sim",
       }),
     ).toThrow(ContractError);
   });

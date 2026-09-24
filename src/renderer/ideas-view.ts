@@ -436,13 +436,54 @@ function renderDetail() {
         "click",
         () =>
           void act(async () => {
-            detail = await api().rate({ operationId, score: value });
+            detail = await api().rate({
+              operationId,
+              score: value,
+              clearLanguage: recommendation.rating?.clearLanguage,
+            });
             items = await api().history();
             toast(`Nota ${value} salva.`);
           }),
       );
       return star;
     }),
+  );
+  const clearLanguage = recommendation.rating?.clearLanguage;
+  const clarityEnabled = recommendation.rating?.score !== undefined;
+  const clarityBtn = (value: boolean, label: string) => {
+    const active = clearLanguage === value;
+    const btn = el("button", {
+      className: `clarity-btn${active ? " active" : ""}`,
+      text: label,
+      attrs: { type: "button", "aria-pressed": String(active) },
+    });
+    btn.disabled = working || !clarityEnabled;
+    btn.addEventListener(
+      "click",
+      () =>
+        void act(async () => {
+          detail = await api().rate({
+            operationId,
+            score: recommendation.rating!.score,
+            comment: recommendation.rating!.comment || undefined,
+            clearLanguage: value,
+          });
+          toast("Resposta de clareza salva.");
+        }),
+    );
+    return btn;
+  };
+  const clarityToggle = el(
+    "div",
+    { className: "clarity-toggle" },
+    el("span", {
+      className: "muted",
+      text: clarityEnabled
+        ? "Fez sentido sem jargão?"
+        : "Avalie com estrelas primeiro",
+    }),
+    clarityBtn(true, "Sim"),
+    clarityBtn(false, "Não"),
   );
   return el(
     "article",
@@ -596,6 +637,7 @@ function renderDetail() {
         { className: "rating" },
         el("span", { text: "Quão útil é esta ideia?" }),
         stars,
+        clarityToggle,
       ),
       el("span", { className: "push" }),
       renderComparisonAction(operationId),

@@ -1284,16 +1284,17 @@ export class ProjectIdeasService {
       parsed.operationId,
     )[0];
     if (!recommendation) throw new ContractError("Resultado não encontrado.");
+    const rating = {
+      score: parsed.score,
+      comment: (parsed.comment ?? "").trim(),
+      ...(parsed.clearLanguage !== undefined
+        ? { clearLanguage: parsed.clearLanguage }
+        : {}),
+    };
     await this.store.mutate((tx) =>
       tx.put(
         "recommendations",
-        {
-          ...recommendation,
-          rating: {
-            score: parsed.score,
-            comment: (parsed.comment ?? "").trim(),
-          },
-        },
+        { ...recommendation, rating },
         recommendation.operationId,
         recommendation.createdAt,
       ),
