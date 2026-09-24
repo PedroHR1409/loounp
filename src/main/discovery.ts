@@ -4,6 +4,7 @@ import {
   normalizeInterestProfile,
   type InterestProfileV2,
 } from "../core/interest-profile";
+import { limits } from "./discovery-limits";
 
 const MODEL = "gpt-5.6-luna";
 const PROMPT_VERSION = "interest-fit-v1";
@@ -21,10 +22,14 @@ export async function proposeInterestProfile(
   },
 ): Promise<InterestProfileV2> {
   const positiveExamples = await Promise.all(
-    input.positiveExamples.slice(0, 10).map(resolveExample),
+    input.positiveExamples
+      .slice(0, limits.examples.maxProposalInput)
+      .map(resolveExample),
   );
   const negativeExamples = await Promise.all(
-    input.negativeExamples.slice(0, 10).map(resolveExample),
+    input.negativeExamples
+      .slice(0, limits.examples.maxProposalInput)
+      .map(resolveExample),
   );
   const response = await client.responses.create({
     model: MODEL,
@@ -37,7 +42,10 @@ export async function proposeInterestProfile(
       {
         role: "user",
         content: JSON.stringify({
-          intent: input.intentText.slice(0, 4000),
+          intent: input.intentText.slice(
+            0,
+            limits.batchAssessment.maxIntentChars,
+          ),
           positiveExamples,
           negativeExamples,
         }),
@@ -52,7 +60,11 @@ export async function proposeInterestProfile(
       },
     },
   });
-  const proposed = parseJson(response.output_text);
+  const proposed = parseJson(response.output_text) as {
+    interestGroups: unknown;
+    positiveTraits: unknown;
+    deprioritizeTraits: unknown;
+  };
   const normalized = normalizeInterestProfile({
     schemaVersion: 2,
     status: "draft",
@@ -94,7 +106,7 @@ const MAX_EXAMPLE_HTML = 256 * 1024;
 export async function resolveExample(
   raw: string,
 ): Promise<{ url?: string; title: string; excerpt: string }> {
-  const value = raw.trim().slice(0, 1500);
+  const value = raw.trim().slice(0, limits.exampleResolution.maxRawInputChars);
   let url: URL;
   try {
     url = new URL(value);
@@ -119,8 +131,8 @@ export async function resolveExample(
       ]) ?? "";
     return {
       url: originalUrl,
-      title: title.slice(0, 500),
-      excerpt: excerpt.slice(0, 1000),
+      title: title.slice(0, limits.exampleResolution.maxTitleChars),
+      excerpt: excerpt.slice(0, limits.exampleResolution.maxExcerptChars),
     };
   } catch {
     return { url: originalUrl, title: originalUrl, excerpt: "" };
@@ -262,11 +274,20 @@ export async function assessContentBatch(
             },
             items: batch.map((item) => ({
               id: item.id,
-              title: item.title.slice(0, 500),
-              author: item.author?.slice(0, 160),
-              description: item.description?.slice(0, 2500),
-              excerpt: item.excerpt?.slice(0, 4000),
-              tags: item.tags.slice(0, 20),
+              title: item.title.slice(0, limits.batchAssessment.maxTitleChars),
+              author: item.author?.slice(
+                0,
+                limits.batchAssessment.maxAuthorChars,
+              ),
+              description: item.description?.slice(
+                0,
+                limits.batchAssessment.maxDescriptionChars,
+              ),
+              excerpt: item.excerpt?.slice(
+                0,
+                limits.batchAssessment.maxExcerptChars,
+              ),
+              tags: item.tags.slice(0, limits.batchAssessment.maxTags),
               source: item.sourceOccurrences[0]?.source,
             })),
           }),
@@ -290,33 +311,31 @@ export async function assessContentBatch(
       throw new Error(
         "A avaliação de relevância retornou um formato inválido.",
       );
-    const byId = new Map<string, any>();
+    const byId = new Map<string, unknown>();
     for (const raw of payload.assessments) {
-      if (
-        !raw ||
-        typeof raw !== "object" ||
-        typeof raw.id !== "string" ||
-        byId.has(raw.id)
-      )
+      if (!isPlainRecord(raw) || typeof raw.id !== "string" || byId.has(raw.id))
         continue;
       byId.set(raw.id, raw);
     }
     batch.forEach((item, index) => {
       const raw = byId.get(item.id);
-      const assessment = validateAssessment(raw, profile, item.id);
+      const assessment = validateAssessment(raw, profile);
       if (assessment) results[offset + index] = assessment;
     });
   }
   return results;
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function validateAssessment(
-  raw: any,
+  raw: unknown,
   profile: InterestProfileV2,
-  id: string,
 ): ContentAssessment | undefined {
   if (
-    !raw ||
+    !isPlainRecord(raw) ||
     !Array.isArray(raw.groupMatches) ||
     typeof raw.confidence !== "number" ||
     typeof raw.reason !== "string"
@@ -325,8 +344,9 @@ function validateAssessment(
   if (raw.confidence < 0 || raw.confidence > 1) return undefined;
   const ids = new Set(profile.interestGroups.map((group) => group.id));
   const groupMatches = raw.groupMatches.filter(
-    (match: any) =>
-      match &&
+    (match): match is { groupId: string; fit: number } =>
+      isPlainRecord(match) &&
+      typeof match.groupId === "string" &&
       ids.has(match.groupId) &&
       typeof match.fit === "number" &&
       match.fit >= 0 &&
@@ -335,12 +355,12 @@ function validateAssessment(
   const signals = Array.isArray(raw.signals)
     ? raw.signals
         .filter(
-          (signal: any) =>
-            signal &&
+          (signal): signal is { code: string; evidence: string } =>
+            isPlainRecord(signal) &&
             typeof signal.code === "string" &&
             typeof signal.evidence === "string",
         )
-        .slice(0, 8)
+        .slice(0, limits.batchAssessment.maxSignals)
     : [];
   return {
     profileRevision: profile.revision,
@@ -360,7 +380,7 @@ function validateAssessment(
       : {}),
     signals,
     confidence: raw.confidence,
-    reason: raw.reason.slice(0, 500),
+    reason: raw.reason.slice(0, limits.batchAssessment.maxReasonChars),
     assessedAt: new Date().toISOString(),
   };
 }
@@ -384,7 +404,7 @@ function validTechnicalDepth(
   return ["low", "medium", "high", "uncertain"].includes(String(value));
 }
 
-function parseJson(text: string): any {
+function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {

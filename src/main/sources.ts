@@ -5,6 +5,7 @@ import {
   type ContentInput,
   type NormalizedContent,
 } from "../core/content";
+import { limits } from "./discovery-limits";
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -90,10 +91,10 @@ export function withBehavioralExamples(
   archivedTitles: string[],
 ): ConfirmedInterestProfile {
   const rated = ratedUsefulTitles
-    .slice(0, 3)
+    .slice(0, limits.examples.maxRatedPerPolarity)
     .map((title) => ({ polarity: "positive" as const, title, excerpt: "" }));
   const ratedAgainst = ratedNotUsefulTitles
-    .slice(0, 3)
+    .slice(0, limits.examples.maxRatedPerPolarity)
     .map((title) => ({ polarity: "negative" as const, title, excerpt: "" }));
   const archived = archivedTitles.map((title) => ({
     polarity: "positive" as const,
@@ -102,17 +103,17 @@ export function withBehavioralExamples(
   }));
   const profilePositive = (profile.examples ?? [])
     .filter((example) => example.polarity === "positive")
-    .slice(0, 5);
+    .slice(0, limits.examples.maxProfilePositive);
   const profileNegative = (profile.examples ?? [])
     .filter((example) => example.polarity === "negative")
-    .slice(0, 3);
+    .slice(0, limits.examples.maxProfileNegative);
   const examples = [
     ...rated,
     ...ratedAgainst,
-    ...archived.slice(0, 3),
+    ...archived.slice(0, limits.examples.maxArchivedPriority),
     ...profilePositive,
     ...profileNegative,
-    ...archived.slice(3),
+    ...archived.slice(limits.examples.maxArchivedPriority),
   ]
     .filter(
       (example, index, all) =>
@@ -121,7 +122,7 @@ export function withBehavioralExamples(
             candidate.title.toLowerCase() === example.title.toLowerCase(),
         ) === index,
     )
-    .slice(0, 16);
+    .slice(0, limits.examples.maxTotal);
   return { ...profile, examples };
 }
 
@@ -176,7 +177,10 @@ function devtoTagsFromProfile(profile: ConfirmedInterestProfile): string[] {
     terms.map((term) => term.toLowerCase().replace(/[^a-z0-9]/g, "")),
   ).filter((tag) => tag.length >= 2 && tag.length <= 30);
   const examples = exampleSearchTerms(profile, core);
-  return [...core.slice(0, 12 - examples.length), ...examples].slice(0, 12);
+  return [
+    ...core.slice(0, limits.tags.maxDevtoProfile - examples.length),
+    ...examples,
+  ].slice(0, limits.tags.maxDevtoProfile);
 }
 
 /** Positive examples contribute a few discovery queries without displacing the user's core topics. */
@@ -214,7 +218,7 @@ function exampleSearchTerms(
         ranked.push(term);
     }
   }
-  return ranked.slice(0, 4);
+  return ranked.slice(0, limits.examples.maxSearchTerms);
 }
 
 function mediumFeedsFromProfile(
@@ -237,7 +241,7 @@ function mediumFeedsFromProfile(
     : [];
   const examples = profile ? exampleSearchTerms(profile, primarySlugs) : [];
   const generatedSlugs = [
-    ...primarySlugs.slice(0, 12 - examples.length),
+    ...primarySlugs.slice(0, limits.tags.maxMediumSlugs - examples.length),
     ...examples,
   ];
   const generatedFeeds = uniqueTerms(
@@ -252,7 +256,7 @@ function mediumFeedsFromProfile(
     ),
   )
     .filter(Boolean)
-    .slice(0, 12)
+    .slice(0, limits.tags.maxMediumSlugs)
     .map((slug) => `https://medium.com/feed/tag/${encodeURIComponent(slug)}`);
   const seen = new Set<string>();
   return [...feeds, ...generatedFeeds].filter((feed) => {
@@ -334,7 +338,10 @@ export async function fetchDevto(
       );
   const tags = uniqueTerms(terms)
     .filter((tag) => tag.length >= 2 && tag.length <= 30)
-    .slice(0, isProfile ? 12 : 5);
+    .slice(
+      0,
+      isProfile ? limits.tags.maxDevtoProfile : limits.tags.maxDevtoLegacy,
+    );
   const responses = await Promise.allSettled(
     tags.map(async (tag) => {
       const url = new URL("https://dev.to/api/articles");
@@ -365,6 +372,7 @@ export async function fetchDevto(
 }
 
 function mapMediumEntry(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw fast-xml-parser output has no fixed shape; validated defensively below
   item: Record<string, any>,
 ): NormalizedContent | undefined {
   try {
@@ -396,9 +404,12 @@ function mapMediumEntry(
           item.updated ??
           new Date().toISOString(),
       ),
-      description: (description || body).slice(0, 4000),
+      description: (description || body).slice(
+        0,
+        limits.normalizedContent.maxDescriptionChars,
+      ),
       tags: [item.category].flat().filter(Boolean).map(cleanText),
-      excerpt: body.slice(0, 4000),
+      excerpt: body.slice(0, limits.normalizedContent.maxExcerptChars),
     };
     const normalized = normalizeContent(input);
     return normalized.title && normalized.canonicalUrl.startsWith("https://")
@@ -425,6 +436,7 @@ export async function fetchMedium(
         !/(^|\.)medium\.com$/i.test(url.hostname)
       )
         throw new Error(`Feed Medium inválido: ${feed}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw fast-xml-parser output has no fixed shape; validated defensively below
       return parser.parse(await fetchMediumXml(url)) as Record<string, any>;
     }),
   );
@@ -438,12 +450,15 @@ export async function fetchMedium(
     .flatMap((feed) => {
       const channel = feed.rss?.channel ?? feed.feed;
       const entries = channel?.item ?? channel?.entry ?? [];
-      return (Array.isArray(entries) ? entries : [entries])
-        .map((item: Record<string, any>) => mapMediumEntry(item))
-        .filter(
-          (item: NormalizedContent | undefined): item is NormalizedContent =>
-            Boolean(item),
-        );
+      return (
+        (Array.isArray(entries) ? entries : [entries])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw fast-xml-parser output has no fixed shape; validated defensively below
+          .map((item: Record<string, any>) => mapMediumEntry(item))
+          .filter(
+            (item: NormalizedContent | undefined): item is NormalizedContent =>
+              Boolean(item),
+          )
+      );
     });
   return deduplicateByCanonicalUrl(items);
 }
