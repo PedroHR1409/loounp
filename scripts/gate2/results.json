@@ -1,0 +1,328 @@
+{
+  "ranAt": "2026-09-23T20:49:48.228Z",
+  "pipeline": "supervisor → lowil_launcher (integridade baixa + Job Object) → worker → graphify 0.9.66",
+  "catalogMs": {
+    "withGraph": 10850,
+    "withoutGraph": 1135
+  },
+  "coverage": {
+    "withGraph": {
+      "cataloged": 4,
+      "consulted": 16,
+      "excluded": 0,
+      "pending": 0,
+      "secretBlockedChunks": 0,
+      "skippedDirectories": 0,
+      "partial": false,
+      "graphStatus": {
+        "etl-jobs": "ok",
+        "landing-site": "ok",
+        "notes-rag": "ok",
+        "orders-api": "ok"
+      }
+    },
+    "withoutGraph": {
+      "cataloged": 4,
+      "consulted": 16,
+      "excluded": 0,
+      "pending": 0,
+      "secretBlockedChunks": 0,
+      "skippedDirectories": 0,
+      "partial": false,
+      "graphStatus": {
+        "etl-jobs": "disabled",
+        "landing-site": "disabled",
+        "notes-rag": "disabled",
+        "orders-api": "disabled"
+      }
+    }
+  },
+  "graphStats": [
+    {
+      "project": "etl-jobs",
+      "nodesDetail": [
+        "gn_bab4d ingest.py @ etl-jobs/src/ingest.py",
+        "gn_ae8f7 ingest_file() @ etl-jobs/src/ingest.py",
+        "gn_77277 Ingestion of partner CSV files into the warehouse. Partners change columns and… @ etl-jobs/src/ingest.py",
+        "gn_b4c72 rows.py @ etl-jobs/src/readers/rows.py",
+        "gn_6e355 parse_rows() @ etl-jobs/src/readers/rows.py",
+        "gn_91b50 warehouse.py @ etl-jobs/src/warehouse.py",
+        "gn_0a0ff load() @ etl-jobs/src/warehouse.py"
+      ],
+      "edgesDetail": [
+        "gn_bab4d -contains-> gn_ae8f7",
+        "gn_77277 -rationale_for-> gn_ae8f7",
+        "gn_b4c72 -contains-> gn_6e355",
+        "gn_91b50 -contains-> gn_0a0ff",
+        "gn_bab4d -imports-> gn_6e355",
+        "gn_bab4d -imports-> gn_0a0ff",
+        "gn_ae8f7 -calls-> gn_6e355",
+        "gn_ae8f7 -calls-> gn_0a0ff"
+      ],
+      "status": "ok",
+      "nodes": 7,
+      "edges": 8,
+      "crossFileEdges": 4,
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
+    },
+    {
+      "project": "landing-site",
+      "nodesDetail": [
+        "gn_5f8c4 build.py @ landing-site/src/build.py",
+        "gn_76742 render() @ landing-site/src/build.py"
+      ],
+      "edgesDetail": [
+        "gn_5f8c4 -contains-> gn_76742"
+      ],
+      "status": "ok",
+      "nodes": 2,
+      "edges": 1,
+      "crossFileEdges": 0,
+      "crossFileRelations": []
+    },
+    {
+      "project": "notes-rag",
+      "nodesDetail": [
+        "gn_68e63 cli.py @ notes-rag/src/cli.py",
+        "gn_75bd2 main() @ notes-rag/src/cli.py",
+        "gn_60956 encoder.py @ notes-rag/src/encoder.py",
+        "gn_d708d encode_batch() @ notes-rag/src/encoder.py",
+        "gn_1474e _encode() @ notes-rag/src/encoder.py",
+        "gn_2b9ef pipeline.py @ notes-rag/src/pipeline.py",
+        "gn_48f1c answer_question() @ notes-rag/src/pipeline.py",
+        "gn_b9c6c Retrieval augmented generation over notes: embeds the question and the… @ notes-rag/src/pipeline.py",
+        "gn_a82e5 store.py @ notes-rag/src/store.py",
+        "gn_44b59 nearest() @ notes-rag/src/store.py"
+      ],
+      "edgesDetail": [
+        "gn_68e63 -contains-> gn_75bd2",
+        "gn_60956 -contains-> gn_d708d",
+        "gn_60956 -contains-> gn_1474e",
+        "gn_d708d -calls-> gn_1474e",
+        "gn_2b9ef -contains-> gn_48f1c",
+        "gn_b9c6c -rationale_for-> gn_48f1c",
+        "gn_a82e5 -contains-> gn_44b59",
+        "gn_2b9ef -imports-> gn_d708d",
+        "gn_2b9ef -imports-> gn_44b59",
+        "gn_48f1c -calls-> gn_d708d",
+        "gn_48f1c -calls-> gn_44b59"
+      ],
+      "status": "ok",
+      "nodes": 10,
+      "edges": 11,
+      "crossFileEdges": 4,
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
+    },
+    {
+      "project": "orders-api",
+      "nodesDetail": [
+        "gn_da543 models.py @ orders-api/src/models.py",
+        "gn_313a2 Order @ orders-api/src/models.py",
+        "gn_ced74 payments.py @ orders-api/src/payments.py",
+        "gn_90314 charge_customer() @ orders-api/src/payments.py",
+        "gn_5a38f Charge the customer through the payment provider. The downstream provider is… @ orders-api/src/payments.py",
+        "gn_f0e44 shipping.py @ orders-api/src/shipping.py",
+        "gn_6d7cb notify_shipping() @ orders-api/src/shipping.py",
+        "gn_8570d policy.py @ orders-api/src/transport/policy.py",
+        "gn_b7067 post_with_policy() @ orders-api/src/transport/policy.py",
+        "gn_98798 _send() @ orders-api/src/transport/policy.py"
+      ],
+      "edgesDetail": [
+        "gn_da543 -contains-> gn_313a2",
+        "gn_ced74 -contains-> gn_90314",
+        "gn_5a38f -rationale_for-> gn_90314",
+        "gn_f0e44 -contains-> gn_6d7cb",
+        "gn_8570d -contains-> gn_b7067",
+        "gn_8570d -contains-> gn_98798",
+        "gn_b7067 -calls-> gn_98798",
+        "gn_ced74 -imports-> gn_b7067",
+        "gn_90314 -calls-> gn_b7067"
+      ],
+      "status": "ok",
+      "nodes": 10,
+      "edges": 9,
+      "crossFileEdges": 2,
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "id": "C1",
+      "kind": "relational",
+      "target": "orders-api/src/transport/policy.py",
+      "entryFoundLexically": true,
+      "targetLexical": false,
+      "targetHybrid": true,
+      "improvement": true,
+      "lexicalFiles": [
+        "orders-api/src/payments.py",
+        "etl-jobs/src/readers/rows.py"
+      ],
+      "hybridOnlyFiles": [
+        "orders-api/src/transport/policy.py",
+        "etl-jobs/src/ingest.py"
+      ],
+      "inferredEvidence": [
+        {
+          "file": "orders-api/src/transport/policy.py",
+          "relation": "imports: orders-api/src/payments.py → orders-api/src/transport/policy.py"
+        },
+        {
+          "file": "etl-jobs/src/ingest.py",
+          "relation": "imports: etl-jobs/src/readers/rows.py → etl-jobs/src/ingest.py"
+        },
+        {
+          "file": "etl-jobs/src/ingest.py",
+          "relation": "calls: etl-jobs/src/readers/rows.py → etl-jobs/src/ingest.py"
+        }
+      ],
+      "candidateFiles": [
+        "orders-api/src/payments.py",
+        "orders-api/src/payments.py",
+        "etl-jobs/src/readers/rows.py"
+      ],
+      "neighborFiles": [
+        "orders-api/src/transport/policy.py",
+        "etl-jobs/src/ingest.py",
+        "etl-jobs/src/ingest.py"
+      ],
+      "invalidReferences": 0,
+      "retrievalMs": {
+        "lexical": 9,
+        "hybrid": 4
+      }
+    },
+    {
+      "id": "C2",
+      "kind": "relational",
+      "target": "notes-rag/src/encoder.py",
+      "entryFoundLexically": true,
+      "targetLexical": true,
+      "targetHybrid": true,
+      "improvement": false,
+      "lexicalFiles": [
+        "notes-rag/src/pipeline.py",
+        "notes-rag/README.md",
+        "notes-rag/src/encoder.py"
+      ],
+      "hybridOnlyFiles": [],
+      "inferredEvidence": [],
+      "candidateFiles": [
+        "notes-rag/src/pipeline.py",
+        "notes-rag/README.md",
+        "notes-rag/src/encoder.py",
+        "notes-rag/src/encoder.py",
+        "notes-rag/src/encoder.py"
+      ],
+      "neighborFiles": [
+        "notes-rag/src/store.py",
+        "notes-rag/src/pipeline.py"
+      ],
+      "invalidReferences": 0,
+      "retrievalMs": {
+        "lexical": 5,
+        "hybrid": 4
+      }
+    },
+    {
+      "id": "C3",
+      "kind": "relational",
+      "target": "etl-jobs/src/readers/rows.py",
+      "entryFoundLexically": true,
+      "targetLexical": false,
+      "targetHybrid": false,
+      "improvement": false,
+      "lexicalFiles": [
+        "etl-jobs/src/ingest.py",
+        "etl-jobs/README.md",
+        "etl-jobs/src/warehouse.py",
+        "orders-api/src/transport/policy.py"
+      ],
+      "hybridOnlyFiles": [
+        "orders-api/src/payments.py"
+      ],
+      "inferredEvidence": [
+        {
+          "file": "orders-api/src/payments.py",
+          "relation": "imports: orders-api/src/transport/policy.py → orders-api/src/payments.py"
+        }
+      ],
+      "candidateFiles": [
+        "etl-jobs/src/ingest.py",
+        "etl-jobs/README.md",
+        "etl-jobs/src/warehouse.py",
+        "etl-jobs/src/ingest.py",
+        "orders-api/src/transport/policy.py",
+        "orders-api/src/transport/policy.py",
+        "orders-api/src/transport/policy.py",
+        "etl-jobs/src/readers/rows.py"
+      ],
+      "neighborFiles": [
+        "orders-api/src/payments.py",
+        "orders-api/src/payments.py"
+      ],
+      "invalidReferences": 0,
+      "retrievalMs": {
+        "lexical": 6,
+        "hybrid": 5
+      }
+    },
+    {
+      "id": "N1",
+      "kind": "negative_control",
+      "target": null,
+      "entryFoundLexically": null,
+      "targetLexical": null,
+      "targetHybrid": null,
+      "improvement": null,
+      "lexicalFiles": [
+        "landing-site/README.md",
+        "landing-site/src/build.py",
+        "etl-jobs/src/ingest.py"
+      ],
+      "hybridOnlyFiles": [
+        "etl-jobs/src/readers/rows.py",
+        "etl-jobs/src/warehouse.py"
+      ],
+      "inferredEvidence": [
+        {
+          "file": "etl-jobs/src/readers/rows.py",
+          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/readers/rows.py"
+        },
+        {
+          "file": "etl-jobs/src/warehouse.py",
+          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/warehouse.py"
+        }
+      ],
+      "candidateFiles": [
+        "landing-site/README.md",
+        "landing-site/src/build.py",
+        "etl-jobs/src/ingest.py"
+      ],
+      "neighborFiles": [
+        "etl-jobs/src/readers/rows.py",
+        "etl-jobs/src/warehouse.py"
+      ],
+      "invalidReferences": 0,
+      "retrievalMs": {
+        "lexical": 5,
+        "hybrid": 4
+      }
+    }
+  ],
+  "verdict": {
+    "improvements": 1,
+    "invalidReferences": 0,
+    "negativeControlGraphAdditions": 2,
+    "pass": false
+  }
+}

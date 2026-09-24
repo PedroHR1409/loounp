@@ -1,0 +1,84 @@
+{
+  "preRegisteredAt": "2026-09-23T20:57:35Z",
+  "approvedBy": "usuário (resposta explícita na sessão de 2026-09-23)",
+  "description": "Gate 3 (DEFINE, critérios de sucesso; DESIGN seção 9). Amostra e metas definidas antes de qualquer geração.",
+  "targets": {
+    "applicableUseful": "Nos 8 aplicáveis, pelo menos 6 recomendações com nota pessoal 4 ou 5 (escala 1-5).",
+    "contextPreference": "Nos mesmos 8, comparação com contexto vs. sem contexto, mesmo modelo e instruções, ordem de apresentação alternada; preferir a contextualizada em pelo menos 5.",
+    "noApplication": "Nos 2 sem aplicação, aceitar ausência de recomendação e não inventar necessidade, projeto ou evidência.",
+    "citations": "100% das citações resolvem para fonte consultada; 0 fontes inventadas.",
+    "ratingSource": "Somente a avaliação do usuário conta; nota do LLM não substitui utilidade percebida."
+  },
+  "sample": [
+    {
+      "key": "A1",
+      "kind": "applicable",
+      "contentId": "devto:4290095",
+      "title": "Make Power BI Semantic Model Settings Easier to Govern",
+      "url": "https://shai-kr.github.io/data-ninja-ai-lab/blog/2026-08-01-power-bi-semantic-model-settings-pane.html"
+    },
+    {
+      "key": "A2",
+      "kind": "applicable",
+      "contentId": "devto:4248231",
+      "title": "Build Fabric Dataflows From Chat and Still Keep Control",
+      "url": "https://shai-kr.github.io/data-ninja-ai-lab/blog/2026-07-27-data-factory-mcp-control.html"
+    },
+    {
+      "key": "A3",
+      "kind": "applicable",
+      "contentId": "medium:https://blog.gopenai.com/agentic-system-design-why-evaluation-beats-observation-and-how-to-build-it-2b9600ee7bfa",
+      "title": "Agentic System Design : Why Evaluation Beats Observation (and How to Build It)",
+      "url": "https://blog.gopenai.com/agentic-system-design-why-evaluation-beats-observation-and-how-to-build-it-2b9600ee7bfa"
+    },
+    {
+      "key": "A4",
+      "kind": "applicable",
+      "contentId": "medium:https://medium.com/@panktisavaliya/how-to-build-production-ready-ai-agents-from-prototype-to-deployment-da6054f17404",
+      "title": "How to Build Production-Ready AI Agents: From Prototype to Deployment",
+      "url": "https://medium.com/@panktisavaliya/how-to-build-production-ready-ai-agents-from-prototype-to-deployment-da6054f17404"
+    },
+    {
+      "key": "A5",
+      "kind": "applicable",
+      "contentId": "devto:4670691",
+      "title": "Databricks Architecture Explained: Control Plane, Compute Plane, Delta Lake and Unity Catalog",
+      "url": "https://dev.to/dino_david_c5d8f55f119b7f/databricks-architecture-explained-control-plane-compute-plane-delta-lake-and-unity-catalog-1167"
+    },
+    {
+      "key": "A6",
+      "kind": "applicable",
+      "contentId": "devto:4701457",
+      "title": "Your AI Knows How to Answer. But Who Teaches It What a Good Answer Is?",
+      "url": "https://dev.to/rijultp/your-ai-knows-how-to-answer-but-who-teaches-it-what-a-good-answer-is-1fc7"
+    },
+    {
+      "key": "A7",
+      "kind": "applicable",
+      "contentId": "devto:4395509",
+      "title": "Deploy only what changed - selective deployment in an Azure DevOps monorepo",
+      "url": "https://www.linkedin.com/pulse/enterprise-microsoft-fabric-cicd-selective-one-azure-devops-ghosh-uxzsf"
+    },
+    {
+      "key": "A8",
+      "kind": "applicable",
+      "contentId": "devto:4158338",
+      "title": "What Microsoft Fabric Apps unlocked for me (and why I am writing about it)",
+      "url": "https://dev.to/przemq99/what-microsoft-fabric-apps-unlocked-for-me-and-why-i-am-writing-about-it-4nge"
+    },
+    {
+      "key": "N1",
+      "kind": "no_application",
+      "contentId": "devto:4265867",
+      "title": "DP-600 vs DP-700 vs DP-750 vs DP-800: Which Microsoft Data Certification Should You Choose?",
+      "url": "https://www.eccentrix.ca/en/eccentrix-corner/microsoft-fabric-data-certifications"
+    },
+    {
+      "key": "N2",
+      "kind": "no_application",
+      "contentId": "devto:4041775",
+      "title": "Is Microsoft Fabric a Good Career Choice in 2026? Jobs & Future Scope Explained",
+      "url": "https://dev.to/techpratham013/is-microsoft-fabric-a-good-career-choice-in-2026-jobs-future-scope-explained-44de"
+    }
+  ]
+}
