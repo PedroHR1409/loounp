@@ -70,6 +70,14 @@ export async function refreshContextView() {
   await act(load, false);
 }
 
+export function coverageSummaryText(
+  lastCatalog: ProjectContextStatus["lastCatalog"],
+): string {
+  if (!lastCatalog) return "Desktop\\Projetos · ainda não catalogado";
+  const { coverage, at } = lastCatalog;
+  return `Desktop\\Projetos · atualizado ${formatDate(at)} · ${coverage.consulted.toLocaleString("pt-BR")} arquivos lidos, ${coverage.excluded.toLocaleString("pt-BR")} excluídos, ${coverage.secretBlockedChunks} trechos com segredo bloqueados`;
+}
+
 function renderProjects() {
   if (!context)
     return el(
@@ -78,7 +86,6 @@ function renderProjects() {
       el("h2", { text: "Seus projetos" }),
     );
   const state = context.isolation.state;
-  const coverage = context.lastCatalog?.coverage;
   return el(
     "section",
     {
@@ -97,9 +104,7 @@ function renderProjects() {
       ),
       el("p", {
         className: "panel-sub",
-        text: coverage
-          ? `Desktop\\Projetos · atualizado ${formatDate(context.lastCatalog!.at)} · ${coverage.consulted.toLocaleString("pt-BR")} arquivos lidos, ${coverage.excluded.toLocaleString("pt-BR")} excluídos, ${coverage.secretBlockedChunks} trechos com segredo bloqueados`
-          : "Desktop\\Projetos · ainda não catalogado",
+        text: coverageSummaryText(context.lastCatalog),
       }),
       context.isolation.reasons.length
         ? el(

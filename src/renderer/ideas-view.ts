@@ -279,6 +279,26 @@ function renderComparisonBlock() {
   );
 }
 
+export type TermKnowledgeState =
+  | { kind: "ask"; question: string }
+  | { kind: "recheck"; question: string }
+  | { kind: "known" };
+
+export function termKnowledgeState(term: IdeaTermView): TermKnowledgeState {
+  const memory = term.knowledge;
+  if (!memory)
+    return {
+      kind: "ask",
+      question: `Você já conhece ou já usou ${term.name}?`,
+    };
+  if (!memory.known)
+    return {
+      kind: "recheck",
+      question: `Na memória "${memory.text}" você disse que não conhecia. Já sabe o que é?`,
+    };
+  return { kind: "known" };
+}
+
 export function cardPendingLabel(item: IdeaHistoryItem): string | null {
   if (item.pendingTermsCount <= 0) return null;
   return item.pendingTermsCount === 1
@@ -309,48 +329,47 @@ function renderTerms(terms: IdeaTermView[]) {
       );
     });
   const row = (term: IdeaTermView) => {
-    const memory = term.knowledge;
-    const question = !memory
-      ? el(
-          "div",
-          { className: "term-question" },
-          el("span", { text: `Você já conhece ou já usou ${term.name}?` }),
-          button("Sim", () => answer(term.name, true), "btn btn-sm", working),
-          button(
-            "Não",
-            () => answer(term.name, false),
-            "btn btn-sm",
-            working,
-          ),
-        )
-      : !memory.known
+    const state = termKnowledgeState(term);
+    const question =
+      state.kind === "ask"
         ? el(
             "div",
             { className: "term-question" },
-            el("span", {
-              text: `Na memória "${memory.text}" você disse que não conhecia. Já sabe o que é?`,
-            }),
+            el("span", { text: state.question }),
+            button("Sim", () => answer(term.name, true), "btn btn-sm", working),
             button(
-              "Sim, já sei",
-              () => answer(term.name, true),
+              "Não",
+              () => answer(term.name, false),
               "btn btn-sm",
               working,
             ),
           )
-        : el(
-            "div",
-            { className: "term-known" },
-            el("span", { text: "Você já conhece." }),
-            button(
-              "Na verdade, não conheço",
-              () => answer(term.name, false),
-              "text-btn",
-              working,
-            ),
-          );
+        : state.kind === "recheck"
+          ? el(
+              "div",
+              { className: "term-question" },
+              el("span", { text: state.question }),
+              button(
+                "Sim, já sei",
+                () => answer(term.name, true),
+                "btn btn-sm",
+                working,
+              ),
+            )
+          : el(
+              "div",
+              { className: "term-known" },
+              el("span", { text: "Você já conhece." }),
+              button(
+                "Na verdade, não conheço",
+                () => answer(term.name, false),
+                "text-btn",
+                working,
+              ),
+            );
     return el(
       "li",
-      { className: `term ${memory && !memory.known ? "term-unknown" : ""}` },
+      { className: `term ${state.kind === "recheck" ? "term-unknown" : ""}` },
       el("strong", { text: term.name }),
       term.explanation ? el("p", { text: term.explanation }) : null,
       question,
