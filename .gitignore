@@ -1,9 +1,25 @@
 node_modules/
 out/
 dist/
+release/
+coverage/
+.vite/
+/local-only/
 *.log
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+Thumbs.db
 .env
+.env.*
+!.env.example
+!.env.*.example
 
-.agents/
-.claude/
+# Agent tooling and its local state are machine-specific; keep them out of Git.
+/AGENTS.md
+/.agents/
 .codex/
+.claude/
