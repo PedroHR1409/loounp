@@ -1,5 +1,5 @@
 import { it } from "vitest";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createRequire } from "node:module";
 import initSqlJs from "sql.js";
@@ -8,8 +8,8 @@ import type {
   Operation,
   Recommendation,
   SourceVersion,
-} from "../../src/core/project-ideas";
-import type { AuditEntry } from "../../src/main/project-context-store";
+} from "../../src/core/project-ideas/contracts";
+import type { AuditEntry } from "../../src/main/project-context/store";
 
 const require = createRequire(import.meta.url);
 type SampleItem = {
@@ -176,8 +176,10 @@ it("builds the Gate 3 report from the feature database (read-only)", async () =>
     targets,
     verdict,
   };
+  const localReportDirectory = join(__dirname, "../../local-only");
+  await mkdir(localReportDirectory, { recursive: true });
   await writeFile(
-    join(__dirname, "results.json"),
+    join(localReportDirectory, "gate3-results.json"),
     JSON.stringify(report, null, 2),
   );
   console.log(

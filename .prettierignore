@@ -1,6 +1,9 @@
 node_modules/
 out/
 dist/
+release/
+coverage/
+local-only/
 package-lock.json
 .claude/
 .codex/

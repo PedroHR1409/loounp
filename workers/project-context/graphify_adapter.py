@@ -4,10 +4,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
+from sandbox_guard import run_graphify_subprocess
 
 ADAPTER_VERSION = "graphify-adapter-v1"
 MAX_NODES = 50_000
@@ -79,15 +81,32 @@ def normalize(raw: dict, copy_root: Path, allowed: set[str]) -> dict:
     return {"status": "partial" if truncated else "ok", "nodes": nodes, "edges": edges, "adapter": ADAPTER_VERSION}
 
 
-def build_graph(copy_root: Path, allowed: set[str]) -> dict:
-    with tempfile.TemporaryDirectory(prefix="a2p-graph-") as scratch:
-        out_root = Path(scratch) / "out"
-        home = Path(scratch) / "home"
-        out_root.mkdir()
-        home.mkdir()
-        command = [sys.executable, "-I", str(GUARD), "--run-module", "graphify", "extract", ".", "--code-only", "--no-cluster", "--no-dedup", "--max-workers", "1", "--out", str(out_root)]
+def _clear_directory(path: Path, *, keep: set[str] = frozenset()) -> None:
+    for child in path.iterdir():
+        if child.name in keep:
+            continue
+        if child.is_symlink():
+            child.unlink()
+        elif child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
+def _build_graph(copy_root: Path, allowed: set[str], scratch: Path) -> dict:
+    out_root = scratch / "out"
+    graph_output = out_root / "graphify-out"
+    home = scratch / "home"
+    out_root.mkdir(parents=True, exist_ok=True)
+    graph_output.mkdir(parents=True, exist_ok=True)
+    home.mkdir(parents=True, exist_ok=True)
+    _clear_directory(out_root, keep={"graphify-out"})
+    _clear_directory(graph_output)
+    _clear_directory(home)
+    try:
+        command = [sys.executable, "-I", str(GUARD), "--run-module", "graphify", "extract", str(copy_root), "--code-only", "--no-cluster", "--no-dedup", "--max-workers", "1", "--out", str(out_root)]
         try:
-            completed = subprocess.run(command, cwd=copy_root, env=_clean_env(home), capture_output=True, text=True, timeout=TIMEOUT_SECONDS, stdin=subprocess.DEVNULL)
+            completed = run_graphify_subprocess(command, cwd=copy_root, env=_clean_env(home), capture_output=True, text=True, timeout=TIMEOUT_SECONDS, stdin=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "nodes": [], "edges": [], "adapter": ADAPTER_VERSION}
         except OSError:
@@ -95,7 +114,7 @@ def build_graph(copy_root: Path, allowed: set[str]) -> dict:
         if completed.returncode != 0:
             missing = "No module named graphify" in completed.stderr
             return {"status": "unavailable" if missing else "failed", "nodes": [], "edges": [], "adapter": ADAPTER_VERSION}
-        graph_path = out_root / "graphify-out" / "graph.json"
+        graph_path = graph_output / "graph.json"
         try:
             info = os.lstat(graph_path)
         except OSError:
@@ -107,3 +126,15 @@ def build_graph(copy_root: Path, allowed: set[str]) -> dict:
         except ValueError:
             return {"status": "invalid_output", "nodes": [], "edges": [], "adapter": ADAPTER_VERSION}
         return normalize(raw, copy_root, allowed)
+    finally:
+        _clear_directory(out_root, keep={"graphify-out"})
+        _clear_directory(graph_output)
+        _clear_directory(home)
+
+
+def build_graph(copy_root: Path, allowed: set[str]) -> dict:
+    configured_scratch = os.environ.get("A2P_GRAPH_SCRATCH")
+    if configured_scratch:
+        return _build_graph(copy_root, allowed, Path(configured_scratch))
+    with tempfile.TemporaryDirectory(prefix="a2p-graph-") as scratch:
+        return _build_graph(copy_root, allowed, Path(scratch))

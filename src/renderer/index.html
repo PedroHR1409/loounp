@@ -89,6 +89,23 @@
             ><span class="nav-label">Ideias</span
             ><span class="nav-count" id="count-ideas"></span>
           </button>
+          <button type="button" class="nav-item" id="open-linkedin-posts">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
+            </svg>
+            <span class="nav-label">Posts LinkedIn</span>
+          </button>
           <button type="button" class="nav-item" id="open-context">
             <svg
               width="18"
@@ -104,6 +121,41 @@
               <path d="M12 3l9 5-9 5-9-5 9-5z"></path>
               <path d="M3 13l9 5 9-5"></path></svg
             ><span class="nav-label">Contexto</span>
+          </button>
+          <button type="button" class="nav-item" id="capture-link">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7"></path>
+              <path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"></path>
+            </svg>
+            <span class="nav-label">Capturar link</span>
+          </button>
+          <button type="button" class="nav-item" id="open-preferences">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+              ></path></svg
+            ><span class="nav-label">Configurações</span>
           </button>
         </nav>
         <div class="sidebar-foot">
@@ -143,6 +195,7 @@
                     <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"></path></svg
                   ><span>Buscar novos</span>
                 </button>
+                <button type="button" class="btn btn-secondary" id="search-theme">Pesquisar tema</button>
               </div>
               <div class="tabs" role="tablist" aria-label="Filtro do feed">
                 <button
@@ -195,8 +248,35 @@
         </div>
         <div id="ideas-view" class="page" hidden></div>
         <div id="context-view" class="page" hidden></div>
+        <div id="preferences-view" class="page" hidden></div>
+        <div id="linkedin-posts-view" class="page" hidden></div>
       </main>
     </div>
+    <dialog id="quick-capture-dialog">
+      <form id="quick-capture-form" class="quick-capture-form">
+        <div class="dialog-head">
+          <div>
+            <div class="eyebrow">CAPTURA RÁPIDA</div>
+            <h2>Analise um artigo</h2>
+          </div>
+          <button type="button" class="close-button" id="close-quick-capture" aria-label="Fechar">×</button>
+        </div>
+        <p class="dialog-copy">Cole o endereço do artigo. O Loounp vai buscar o texto e preparar uma ideia com base nos seus projetos.</p>
+        <label for="quick-capture-url">Link do artigo</label>
+        <input id="quick-capture-url" class="field" type="url" autocomplete="url" placeholder="https://exemplo.com/artigo" required />
+        <div id="quick-capture-error" class="notice notice-err" role="alert" hidden></div>
+        <div class="dialog-actions">
+          <button type="button" class="button" id="cancel-quick-capture">Cancelar</button>
+          <button type="submit" class="button button-dark" id="submit-quick-capture">Capturar artigo</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="theme-research-dialog" class="theme-research-dialog">
+      <div class="theme-research-shell">
+        <button type="button" class="dialog-close" id="close-theme-research" aria-label="Fechar">×</button>
+        <div id="theme-research-content"></div>
+      </div>
+    </dialog>
     <dialog id="settings-dialog">
       <form method="dialog" id="settings-form">
         <div class="dialog-head">
@@ -278,12 +358,12 @@
           + Adicionar tema
         </button>
         <label for="medium-feeds"
-          >Feeds RSS do Medium <span>um endereço por linha</span></label
+          >Feeds RSS <span>Medium ou qualquer outro feed HTTPS, um endereço por linha</span></label
         >
         <textarea
           id="medium-feeds"
           rows="3"
-          placeholder="https://medium.com/feed/tag/artificial-intelligence"
+          placeholder="https://medium.com/feed/tag/artificial-intelligence&#10;https://blog.exemplo.com/feed.xml"
         ></textarea>
         <section
           class="ai-box archive-box"

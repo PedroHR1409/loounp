@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Loounp — captura de artigos",
+  "version": "1.0.0",
+  "description": "Envia uma página ou link para análise no Loounp.",
+  "permissions": ["contextMenus"],
+  "background": {
+    "service_worker": "service-worker.js"
+  }
+}

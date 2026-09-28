@@ -9,6 +9,21 @@ contextBridge.exposeInMainWorld("contentApp", {
   confirmProfile: (profile: unknown) =>
     ipcRenderer.invoke("profile:confirm", profile),
   refresh: () => ipcRenderer.invoke("feed:refresh"),
+  setDiscoveryInterval: (hours: number) =>
+    ipcRenderer.invoke("settings:set-discovery-interval", hours),
+  setDiscoveryTimeGmtMinus3: (time: string) =>
+    ipcRenderer.invoke("settings:set-discovery-time-gmt-minus-3", time),
+  onCaptureRequest: (callback: (url: string | null) => void) => {
+    const listener = (_event: IpcRendererEvent, url: string | null) =>
+      callback(url);
+    ipcRenderer.on("capture:request", listener);
+    return () => ipcRenderer.removeListener("capture:request", listener);
+  },
+  onFeedUpdated: (callback: () => void) => {
+    const listener = () => callback();
+    ipcRenderer.on("feed:updated", listener);
+    return () => ipcRenderer.removeListener("feed:updated", listener);
+  },
   recordFeedback: (contentId: string, action: string, value?: string) =>
     ipcRenderer.invoke("feedback:record", { contentId, action, value }),
   openLink: (url: string) => ipcRenderer.invoke("link:open", url),
@@ -25,6 +40,28 @@ contextBridge.exposeInMainWorld("contentApp", {
   exportData: () => ipcRenderer.invoke("data:export"),
   previewDataImport: () => ipcRenderer.invoke("data:import-preview"),
   commitDataImport: () => ipcRenderer.invoke("data:import-commit"),
+});
+
+contextBridge.exposeInMainWorld("themeResearch", {
+  start: (input: unknown) => ipcRenderer.invoke("theme-research:start", input),
+  cancel: (searchId: string) => ipcRenderer.invoke("theme-research:cancel", { searchId }),
+  onEvent: (callback: (event: unknown) => void) => {
+    const listener = (_event: IpcRendererEvent, payload: unknown) =>
+      callback(payload);
+    ipcRenderer.on("theme-research:event", listener);
+    return () => ipcRenderer.removeListener("theme-research:event", listener);
+  },
+  saveIdea: (input: unknown) => ipcRenderer.invoke("theme-research:save-idea", input),
+  listSaved: (input?: unknown) => ipcRenderer.invoke("theme-research:list-saved", input ?? {}),
+  deleteSaved: (id: string) => ipcRenderer.invoke("theme-research:delete-saved", { id }),
+  getStatus: (searchId: string) => ipcRenderer.invoke("theme-research:get-status", { searchId }),
+});
+
+contextBridge.exposeInMainWorld("linkedinPosts", {
+  generate: (input: unknown) => ipcRenderer.invoke("linkedin-posts:generate", input),
+  list: () => ipcRenderer.invoke("linkedin-posts:list"),
+  update: (input: unknown) => ipcRenderer.invoke("linkedin-posts:update", input),
+  delete: (id: string) => ipcRenderer.invoke("linkedin-posts:delete", { id }),
 });
 
 contextBridge.exposeInMainWorld("projectIdeas", {
@@ -87,6 +124,8 @@ contextBridge.exposeInMainWorld("projectIdeas", {
     ipcRenderer.invoke("project-context:remove", { projectId }),
   setRealSources: (enabled: boolean) =>
     ipcRenderer.invoke("project-context:set-real-sources", { enabled }),
+  setSemanticRerank: (enabled: boolean) =>
+    ipcRenderer.invoke("project-context:set-semantic-rerank", { enabled }),
   listMemory: () => ipcRenderer.invoke("personal-memory:list"),
   answerKnowledge: (term: string, known: boolean) =>
     ipcRenderer.invoke("personal-memory:answer-knowledge", { term, known }),

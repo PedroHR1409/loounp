@@ -11,8 +11,12 @@
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "build": "electron-vite build",
+    "dist:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-win.ps1",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "eval:gate2": "vitest run --config scripts/gate2/vitest.config.ts",
+    "eval:gate3": "vitest run --config scripts/gate3/vitest.config.ts",
     "test": "vitest run",
+    "test:python": "python -m unittest discover -s workers/project-context -p test_*.py",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -28,7 +32,9 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.10.0",
     "@types/sql.js": "^1.4.9",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
@@ -36,7 +42,45 @@
     "prettier": "^3.9.9",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.70.1",
-    "@typescript/native": "npm:typescript@^7.0.2",
     "vitest": "^4.1.5"
+  },
+  "build": {
+    "appId": "com.loounp.desktop",
+    "productName": "Loounp",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "protocols": [
+      {
+        "name": "Loounp article capture",
+        "schemes": ["loounp"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "${productName}-${version}-setup-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+    }
   }
 }

@@ -41,7 +41,7 @@ vi.mock("electron", () => ({
   shell: { openExternal: vi.fn() },
 }));
 
-vi.mock("./database", () => ({
+vi.mock("./storage/database", () => ({
   all: (sql: string) =>
     sql.includes("FROM content")
       ? memory.content
@@ -55,15 +55,32 @@ vi.mock("./database", () => ({
   setSetting: (key: string, value: string) => memory.settings.set(key, value),
 }));
 
-vi.mock("./sources", () => ({
+vi.mock("./discovery/sources", () => ({
   fetchDevto: vi.fn(async () => []),
   fetchMedium: vi.fn(async () => []),
   deduplicateByCanonicalUrl: (items: unknown[]) => items,
 }));
-vi.mock("./discovery", () => ({
+vi.mock("./discovery/content-discovery", () => ({
   assessContentBatch: vi.fn(async () => []),
   proposeInterestProfile: vi.fn(),
 }));
+
+vi.mock("./security/ipc-security", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./security/ipc-security")>();
+  return {
+    ...actual,
+    assertTrustedIpcSender: (
+      event: Parameters<typeof actual.assertTrustedIpcSender>[0],
+      mainWindow: Parameters<typeof actual.assertTrustedIpcSender>[1],
+      isTrustedRendererUrl: Parameters<typeof actual.assertTrustedIpcSender>[2],
+    ) => {
+      // Existing handler integration cases use {} as a placeholder event.
+      // Real Electron IPC events always include sender and senderFrame.
+      if (!("sender" in event) && !("senderFrame" in event)) return;
+      actual.assertTrustedIpcSender(event, mainWindow, isTrustedRendererUrl);
+    },
+  };
+});
 
 await import("./index");
 
@@ -95,6 +112,31 @@ describe("profile IPC integration", () => {
     memory.settings.clear();
     memory.content.length = 0;
     memory.feedback.length = 0;
+  });
+
+  it("saves a legacy profile with a non-Medium HTTPS feed and rejects a private-host feed", async () => {
+    await memory.handlers.get("profile:save")!(
+      {},
+      {
+        topics: [{ name: "AI", importance: 3 }],
+        mediumFeeds: ["https://example.com/feed.xml"],
+        recencyPreference: 0.5,
+      },
+    );
+    expect(JSON.parse(memory.settings.get("profile")!).mediumFeeds).toEqual([
+      "https://example.com/feed.xml",
+    ]);
+
+    await expect(
+      memory.handlers.get("profile:save")!(
+        {},
+        {
+          topics: [{ name: "AI", importance: 3 }],
+          mediumFeeds: ["https://127.0.0.1/feed.xml"],
+          recencyPreference: 0.5,
+        },
+      ),
+    ).rejects.toThrow("rede privada/local");
   });
 
   it("persists only a validated, explicitly confirmed profile and returns it as active", async () => {
@@ -157,6 +199,7 @@ describe("profile IPC integration", () => {
       "project-context:refresh",
       "project-context:remove",
       "project-context:set-real-sources",
+      "project-context:set-semantic-rerank",
       "project-context:status",
       "project-context:unignore",
       "project-ideas:authorize",
@@ -183,6 +226,7 @@ describe("profile IPC integration", () => {
       "feedback:record",
       "profile:confirm",
       "content:analyze",
+      "settings:set-discovery-interval",
     ])
       expect(memory.handlers.has(channel)).toBe(true);
   });
@@ -195,8 +239,31 @@ describe("profile IPC integration", () => {
       ),
     ).rejects.toThrow("não autorizada");
     await expect(
-      memory.handlers.get("personal-memory:list")!({}),
+      memory.handlers.get("personal-memory:list")!(
+        { sender: {}, senderFrame: {} },
+      ),
     ).rejects.toThrow("não autorizada");
+
+    const security = await vi.importActual<typeof import("./security/ipc-security")>(
+      "./security/ipc-security",
+    );
+    const mainFrame = { url: "file:///trusted/index.html" };
+    const webContents = { mainFrame };
+    const trustedWindow = { webContents };
+    expect(() =>
+      security.assertTrustedIpcSender(
+        { sender: webContents, senderFrame: mainFrame },
+        trustedWindow,
+        (url) => url === "file:///trusted/index.html",
+      ),
+    ).not.toThrow();
+    expect(() =>
+      security.assertTrustedIpcSender(
+        { sender: webContents, senderFrame: mainFrame },
+        trustedWindow,
+        () => false,
+      ),
+    ).toThrow("não autorizada");
   });
 
   it("returns a discovery funnel snapshot after a refresh, including an empty source response", async () => {
@@ -215,5 +282,34 @@ describe("profile IPC integration", () => {
     expect(JSON.parse(memory.settings.get("discovery_stats")!)).toEqual(
       result.stats,
     );
+  });
+
+  it("prevents an overlapping feed refresh from running concurrently", async () => {
+    const refresh = memory.handlers.get("feed:refresh")!;
+    const first = refresh({});
+    await expect(refresh({})).rejects.toThrow("já está em andamento");
+    await first;
+  });
+
+  it("validates and persists the discovery interval preference", async () => {
+    const setInterval = memory.handlers.get(
+      "settings:set-discovery-interval",
+    )!;
+    await expect(setInterval({}, 5)).rejects.toThrow(
+      "Intervalo de busca automática inválido.",
+    );
+    expect(memory.settings.has("discovery_interval_hours")).toBe(false);
+
+    await setInterval({}, 12);
+    expect(memory.settings.get("discovery_interval_hours")).toBe("12");
+  });
+
+  it("exposes the discovery interval preference in app state, defaulting to off", async () => {
+    const state = await memory.handlers.get("app:get-state")!({});
+    expect(state.discoveryIntervalHours).toBe(0);
+
+    memory.settings.set("discovery_interval_hours", "24");
+    const updated = await memory.handlers.get("app:get-state")!({});
+    expect(updated.discoveryIntervalHours).toBe(24);
   });
 });
