@@ -10,22 +10,34 @@ import {
   openIdeaPanel,
   openIdeaPanelOperation,
   setIdeaPanelHandlers,
-} from "./project-ideas";
+} from "./features/ideas/project-ideas";
 import {
   hideIdeasView,
+  pendingTermsSummaryLabel,
   refreshIdeasView,
   setIdeasViewHandlers,
   showIdeasView,
-} from "./ideas-view";
+} from "./features/ideas/ideas-view";
 import {
   hideContextView,
   refreshContextView,
   setContextViewHandlers,
   showContextView,
-} from "./context-view";
-import { outcomeLabels } from "./ideas-ui";
+} from "./features/project-context/context-view";
+import {
+  hidePreferencesView,
+  setPreferencesViewState,
+  showPreferencesView,
+} from "./features/preferences/preferences-view";
+import { outcomeLabels } from "./features/ideas/ideas-ui";
+import { setupThemeResearch } from "./features/theme-research/theme-research";
+import { setupQuickCapture } from "./features/capture/quick-capture";
+import {
+  hideLinkedInPostsView,
+  showLinkedInPostsView,
+} from "./features/linkedin/posts-view";
 
-type View = "feed" | "ideas" | "context";
+type View = "feed" | "ideas" | "context" | "preferences" | "linkedin";
 type Filter = "all" | "saved" | "ideas";
 
 const feed = document.querySelector<HTMLElement>("#feed")!;
@@ -37,6 +49,8 @@ const navButtons: Record<View, HTMLButtonElement> = {
   feed: document.querySelector<HTMLButtonElement>("#open-feed")!,
   ideas: document.querySelector<HTMLButtonElement>("#open-ideas")!,
   context: document.querySelector<HTMLButtonElement>("#open-context")!,
+  preferences: document.querySelector<HTMLButtonElement>("#open-preferences")!,
+  linkedin: document.querySelector<HTMLButtonElement>("#open-linkedin-posts")!,
 };
 let state: AppState;
 let activeFilter: Filter = "all";
@@ -57,7 +71,12 @@ const topicMetadata = new WeakMap<
   InterestProfileV2["interestGroups"][number]
 >();
 
+setupThemeResearch();
+setupQuickCapture();
+
 const svg = {
+  linkedin:
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.05-1.86-3.05-1.86 0-2.14 1.45-2.14 2.95v5.67H9.35V9h3.41v1.56h.05c.47-.9 1.63-1.86 3.35-1.86 3.58 0 4.24 2.35 4.24 5.4v6.35zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0z"></path></svg>',
   save: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>',
   useful:
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 2 2v4h6a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"></path></svg>',
@@ -222,7 +241,7 @@ function categoryLabel(value: string | null) {
 }
 
 const sourceLabel = (source: ContentItem["source"]) =>
-  source === "devto" ? "DEV.TO" : "MEDIUM";
+  source === "devto" ? "DEV.TO" : source === "medium" ? "MEDIUM" : "RSS";
 
 function visibleItems() {
   if (activeFilter === "saved") return state.items.filter((item) => item.saved);
@@ -366,6 +385,7 @@ function renderReading() {
     ${reasons ? `<div class="reading-block"><div class="label">Por que está aqui</div><div class="feed-row-chips">${reasons}</div></div>` : ""}
     <div class="reading-actions">
       <button type="button" class="icon-btn" data-action="save" aria-pressed="${item.saved}" aria-label="${item.saved ? "Remover dos salvos" : "Salvar para ler depois"}" title="${item.saved ? "Remover dos salvos" : "Salvar"}">${svg.save}</button>
+      <button type="button" class="icon-btn linkedin-source-action" data-action="linkedin-post" aria-label="Gerar post para LinkedIn" title="Gerar post para LinkedIn">${svg.linkedin}</button>
       <button type="button" class="icon-btn" data-action="useful" aria-pressed="${item.rating === "useful"}" aria-label="Útil" title="Útil">${svg.useful}</button>
       <button type="button" class="icon-btn" data-action="not_useful" aria-pressed="${item.rating === "not_useful"}" aria-label="Não foi útil" title="Não foi útil">${svg.notUseful}</button>
       <button type="button" class="text-btn" data-action="analyze">${item.summary ? "Atualizar resumo" : "Resumir e classificar"}</button>
@@ -418,7 +438,11 @@ async function loadContextSummary() {
     : null;
 }
 
-async function showView(view: View, operationId?: string) {
+async function showView(
+  view: View,
+  operationId?: string,
+  linkedinSource?: LinkedInPostSource,
+) {
   currentView = view;
   for (const [name, button] of Object.entries(navButtons) as Array<
     [View, HTMLButtonElement]
@@ -432,6 +456,16 @@ async function showView(view: View, operationId?: string) {
   else hideIdeasView();
   if (view === "context") await showContextView();
   else hideContextView();
+  if (view === "preferences") {
+    setPreferencesViewState({
+      discoveryIntervalHours: state.discoveryIntervalHours,
+      discoveryTimeGmtMinus3: state.discoveryTimeGmtMinus3,
+      lastRefresh: state.lastRefresh,
+    });
+    showPreferencesView();
+  } else hidePreferencesView();
+  if (view === "linkedin") await showLinkedInPostsView(linkedinSource);
+  else hideLinkedInPostsView();
   if (view === "feed") render();
 }
 
@@ -448,6 +482,9 @@ setIdeasViewHandlers({
   },
   feedTitle: (contentId) =>
     state?.items.find((item) => item.id === contentId)?.title,
+  generateLinkedInPost: (source) => {
+    void showView("linkedin", undefined, source);
+  },
 });
 setContextViewHandlers({
   onChanged: () => {
@@ -506,6 +543,10 @@ window.projectIdeas.onEvent((event) => {
   }
 });
 
+window.contentApp.onFeedUpdated(() => {
+  void load();
+});
+
 void window.projectIdeas
   .getStatus()
   .then((current) => {
@@ -537,6 +578,18 @@ void window.projectIdeas
         /* localStorage indisponível; a notificação pode repetir */
       }
     }
+  })
+  .catch(() => undefined);
+
+void window.projectIdeas
+  .history()
+  .then((history) => {
+    const label = pendingTermsSummaryLabel(history);
+    if (label)
+      notify(label, undefined, {
+        label: "Ver termos pendentes",
+        run: () => void showView("ideas"),
+      });
   })
   .catch(() => undefined);
 
@@ -720,6 +773,14 @@ navButtons.context.addEventListener(
     void (currentView === "context"
       ? refreshContextView()
       : showView("context")),
+);
+navButtons.preferences.addEventListener("click", () =>
+  void (currentView === "preferences"
+    ? load().then(() => showView("preferences"))
+    : showView("preferences")),
+);
+navButtons.linkedin.addEventListener("click", () =>
+  void showView("linkedin"),
 );
 document
   .querySelector("#add-topic")!
@@ -1160,6 +1221,13 @@ readingPane.addEventListener("click", async (event) => {
     );
     return;
   }
+  if (action === "linkedin-post") {
+    void showView("linkedin", undefined, {
+      kind: "feed_article",
+      contentId: item.id,
+    });
+    return;
+  }
   if (action === "analyze" && !state.hasApiKey) {
     showSettings();
     notify("Adicione uma chave OpenAI para usar o resumo.");
@@ -1185,12 +1253,8 @@ readingPane.addEventListener("click", async (event) => {
     }
     await load();
     if (action === "analyze") notify("Resumo e sinais editoriais atualizados.");
-    if (action === "useful")
-      notify("Anotado: a avaliação afeta o ranking e as próximas buscas.");
-    if (action === "not_useful")
-      notify(
-        "Anotado: essa avaliação reduz a prioridade do tema correspondente.",
-      );
+    if (action === "useful" || action === "not_useful")
+      notify("Anotado: esta avalia\u00e7\u00e3o afeta o artigo. Temas s\u00f3 ajustam buscas ap\u00f3s sinais repetidos em artigos diferentes.");
     if (action === "hide") notify("Artigo ocultado do feed.", item.id);
   } catch (error) {
     notify(String(error));

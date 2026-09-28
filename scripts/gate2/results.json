@@ -1,9 +1,9 @@
 {
-  "ranAt": "2026-09-23T20:49:48.228Z",
+  "ranAt": "2026-09-27T22:19:02.289Z",
   "pipeline": "supervisor → lowil_launcher (integridade baixa + Job Object) → worker → graphify 0.9.66",
   "catalogMs": {
-    "withGraph": 10850,
-    "withoutGraph": 1135
+    "withGraph": 60982,
+    "withoutGraph": 21179
   },
   "coverage": {
     "withGraph": {
@@ -63,7 +63,10 @@
       "nodes": 7,
       "edges": 8,
       "crossFileEdges": 4,
-      "crossFileRelations": ["imports", "calls"]
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
     },
     {
       "project": "landing-site",
@@ -71,7 +74,9 @@
         "gn_5f8c4 build.py @ landing-site/src/build.py",
         "gn_76742 render() @ landing-site/src/build.py"
       ],
-      "edgesDetail": ["gn_5f8c4 -contains-> gn_76742"],
+      "edgesDetail": [
+        "gn_5f8c4 -contains-> gn_76742"
+      ],
       "status": "ok",
       "nodes": 2,
       "edges": 1,
@@ -109,7 +114,10 @@
       "nodes": 10,
       "edges": 11,
       "crossFileEdges": 4,
-      "crossFileRelations": ["imports", "calls"]
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
     },
     {
       "project": "orders-api",
@@ -140,7 +148,10 @@
       "nodes": 10,
       "edges": 9,
       "crossFileEdges": 2,
-      "crossFileRelations": ["imports", "calls"]
+      "crossFileRelations": [
+        "imports",
+        "calls"
+      ]
     }
   ],
   "results": [
@@ -157,21 +168,12 @@
         "etl-jobs/src/readers/rows.py"
       ],
       "hybridOnlyFiles": [
-        "orders-api/src/transport/policy.py",
-        "etl-jobs/src/ingest.py"
+        "orders-api/src/transport/policy.py"
       ],
       "inferredEvidence": [
         {
           "file": "orders-api/src/transport/policy.py",
           "relation": "imports: orders-api/src/payments.py → orders-api/src/transport/policy.py"
-        },
-        {
-          "file": "etl-jobs/src/ingest.py",
-          "relation": "imports: etl-jobs/src/readers/rows.py → etl-jobs/src/ingest.py"
-        },
-        {
-          "file": "etl-jobs/src/ingest.py",
-          "relation": "calls: etl-jobs/src/readers/rows.py → etl-jobs/src/ingest.py"
         }
       ],
       "candidateFiles": [
@@ -180,14 +182,12 @@
         "etl-jobs/src/readers/rows.py"
       ],
       "neighborFiles": [
-        "orders-api/src/transport/policy.py",
-        "etl-jobs/src/ingest.py",
-        "etl-jobs/src/ingest.py"
+        "orders-api/src/transport/policy.py"
       ],
       "invalidReferences": 0,
       "retrievalMs": {
         "lexical": 9,
-        "hybrid": 4
+        "hybrid": 7
       }
     },
     {
@@ -195,28 +195,39 @@
       "kind": "relational",
       "target": "notes-rag/src/encoder.py",
       "entryFoundLexically": true,
-      "targetLexical": true,
+      "targetLexical": false,
       "targetHybrid": true,
-      "improvement": false,
+      "improvement": true,
       "lexicalFiles": [
         "notes-rag/src/pipeline.py",
-        "notes-rag/README.md",
-        "notes-rag/src/encoder.py"
+        "notes-rag/README.md"
       ],
-      "hybridOnlyFiles": [],
-      "inferredEvidence": [],
+      "hybridOnlyFiles": [
+        "notes-rag/src/encoder.py",
+        "notes-rag/src/store.py"
+      ],
+      "inferredEvidence": [
+        {
+          "file": "notes-rag/src/encoder.py",
+          "relation": "imports: notes-rag/src/pipeline.py → notes-rag/src/encoder.py"
+        },
+        {
+          "file": "notes-rag/src/store.py",
+          "relation": "imports: notes-rag/src/pipeline.py → notes-rag/src/store.py"
+        }
+      ],
       "candidateFiles": [
         "notes-rag/src/pipeline.py",
-        "notes-rag/README.md",
-        "notes-rag/src/encoder.py",
-        "notes-rag/src/encoder.py",
-        "notes-rag/src/encoder.py"
+        "notes-rag/README.md"
       ],
-      "neighborFiles": ["notes-rag/src/store.py", "notes-rag/src/pipeline.py"],
+      "neighborFiles": [
+        "notes-rag/src/encoder.py",
+        "notes-rag/src/store.py"
+      ],
       "invalidReferences": 0,
       "retrievalMs": {
-        "lexical": 5,
-        "hybrid": 4
+        "lexical": 6,
+        "hybrid": 11
       }
     },
     {
@@ -225,19 +236,25 @@
       "target": "etl-jobs/src/readers/rows.py",
       "entryFoundLexically": true,
       "targetLexical": false,
-      "targetHybrid": false,
-      "improvement": false,
+      "targetHybrid": true,
+      "improvement": true,
       "lexicalFiles": [
         "etl-jobs/src/ingest.py",
         "etl-jobs/README.md",
         "etl-jobs/src/warehouse.py",
         "orders-api/src/transport/policy.py"
       ],
-      "hybridOnlyFiles": ["orders-api/src/payments.py"],
+      "hybridOnlyFiles": [
+        "etl-jobs/src/readers/rows.py"
+      ],
       "inferredEvidence": [
         {
-          "file": "orders-api/src/payments.py",
-          "relation": "imports: orders-api/src/transport/policy.py → orders-api/src/payments.py"
+          "file": "etl-jobs/src/readers/rows.py",
+          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/readers/rows.py"
+        },
+        {
+          "file": "etl-jobs/src/warehouse.py",
+          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/warehouse.py"
         }
       ],
       "candidateFiles": [
@@ -251,13 +268,15 @@
         "etl-jobs/src/readers/rows.py"
       ],
       "neighborFiles": [
-        "orders-api/src/payments.py",
-        "orders-api/src/payments.py"
+        "etl-jobs/src/readers/rows.py",
+        "etl-jobs/src/warehouse.py",
+        "etl-jobs/src/ingest.py",
+        "etl-jobs/src/ingest.py"
       ],
       "invalidReferences": 0,
       "retrievalMs": {
-        "lexical": 6,
-        "hybrid": 5
+        "lexical": 9,
+        "hybrid": 12
       }
     },
     {
@@ -273,40 +292,25 @@
         "landing-site/src/build.py",
         "etl-jobs/src/ingest.py"
       ],
-      "hybridOnlyFiles": [
-        "etl-jobs/src/readers/rows.py",
-        "etl-jobs/src/warehouse.py"
-      ],
-      "inferredEvidence": [
-        {
-          "file": "etl-jobs/src/readers/rows.py",
-          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/readers/rows.py"
-        },
-        {
-          "file": "etl-jobs/src/warehouse.py",
-          "relation": "imports: etl-jobs/src/ingest.py → etl-jobs/src/warehouse.py"
-        }
-      ],
+      "hybridOnlyFiles": [],
+      "inferredEvidence": [],
       "candidateFiles": [
         "landing-site/README.md",
         "landing-site/src/build.py",
         "etl-jobs/src/ingest.py"
       ],
-      "neighborFiles": [
-        "etl-jobs/src/readers/rows.py",
-        "etl-jobs/src/warehouse.py"
-      ],
+      "neighborFiles": [],
       "invalidReferences": 0,
       "retrievalMs": {
-        "lexical": 5,
-        "hybrid": 4
+        "lexical": 7,
+        "hybrid": 6
       }
     }
   ],
   "verdict": {
-    "improvements": 1,
+    "improvements": 3,
     "invalidReferences": 0,
-    "negativeControlGraphAdditions": 2,
-    "pass": false
+    "negativeControlGraphAdditions": 0,
+    "pass": true
   }
 }

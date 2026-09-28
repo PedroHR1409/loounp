@@ -5,7 +5,7 @@ import globals from "globals";
 
 export default tseslint.config(
   {
-    ignores: ["out/", "dist/", "node_modules/"],
+    ignores: ["out/", "dist/", "release/", "node_modules/"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -39,6 +39,12 @@ export default tseslint.config(
     files: ["src/renderer/**/*.ts"],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  {
+    files: ["extensions/chrome-edge/**/*.js"],
+    languageOptions: {
+      globals: { ...globals.serviceworker, chrome: "readonly" },
     },
   },
   eslintConfigPrettier,

@@ -15,16 +15,16 @@ import {
   SandboxSupervisor,
   checkIsolation,
   type SandboxEnvironment,
-} from "../../src/main/project-context-sandbox";
+} from "../../src/main/project-context/sandbox";
 import {
   ProjectContextStore,
   DEFAULT_PROTECTED_ROOT,
-} from "../../src/main/project-context-store";
+} from "../../src/main/project-context/store";
 import {
   ingestCatalog,
   retrieveEvidence,
   type ProjectIndex,
-} from "../../src/main/project-context-retrieval";
+} from "../../src/main/project-context/retrieval";
 import { fixtureFiles } from "./fixtures";
 
 type Case = {
@@ -36,11 +36,21 @@ type Case = {
   target: string | null;
 };
 
-const featureRoot = join(
-  process.env.APPDATA!,
-  "content-discovery-poc",
-  "article-to-project",
-);
+const featureRoot =
+  process.env.LOOUNP_GATE2_FEATURE_ROOT ??
+  join(process.env.APPDATA!, "content-discovery-poc", "article-to-project");
+const runtimeDirectory =
+  process.env.LOOUNP_GATE2_RUNTIME_DIRECTORY ?? join(featureRoot, "runtime");
+const lowDirectory =
+  process.env.LOOUNP_GATE2_LOW_DIRECTORY ??
+  join(
+    process.env.USERPROFILE!,
+    "AppData",
+    "LocalLow",
+    "content-discovery-poc",
+    "article-to-project",
+    "gate2",
+  );
 
 async function catalog(
   env: SandboxEnvironment,
@@ -83,16 +93,9 @@ describe("Gate 2 — lexical vs lexical + graph", () => {
       );
       const env: SandboxEnvironment = {
         platform: process.platform,
-        runtimeDirectory: join(featureRoot, "runtime"),
+        runtimeDirectory,
         featureDirectory: feature,
-        lowDirectory: join(
-          process.env.USERPROFILE!,
-          "AppData",
-          "LocalLow",
-          "content-discovery-poc",
-          "article-to-project",
-          "gate2",
-        ),
+        lowDirectory,
         sourceRoot: source,
         protectedRoot: DEFAULT_PROTECTED_ROOT,
         realSourcesEnabled: () => true,
@@ -287,8 +290,17 @@ describe("Gate 2 — lexical vs lexical + graph", () => {
           2,
         ),
       );
+      if (!verdict.pass)
+        throw new Error(
+          `Gate 2 reprovado: ${improvements}/3 melhorias, ${negative.inferredEvidence.length} evidências no controle negativo e ${verdict.invalidReferences} referências inválidas.`,
+        );
     } finally {
-      await rm(base, { recursive: true, force: true });
+      await rm(base, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 500,
+      });
     }
   }, 600_000);
 });

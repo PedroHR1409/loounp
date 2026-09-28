@@ -10,7 +10,7 @@ SCRIPT = r'''
 import json, subprocess, sys, socket
 sys.path.insert(0, sys.argv[1])
 import sandbox_guard
-sandbox_guard.install(allowed_executables=(sys.executable,))
+sandbox_guard.install()
 results = {}
 def attempt(name, op):
     try:
@@ -27,11 +27,11 @@ print(json.dumps(results))
 
 
 class GuardTests(unittest.TestCase):
-    def test_blocks_network_and_foreign_processes_but_allows_own_interpreter(self):
+    def test_blocks_network_and_all_child_processes(self):
         completed = subprocess.run([sys.executable, "-I", "-c", SCRIPT, str(HERE)], capture_output=True, text=True, timeout=60)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         results = json.loads(completed.stdout.strip().splitlines()[-1])
-        self.assertEqual(results, {"network": "blocked", "dns": "blocked", "other_process": "blocked", "os_system": "blocked", "own_interpreter": "allowed"})
+        self.assertEqual(results, {"network": "blocked", "dns": "blocked", "other_process": "blocked", "os_system": "blocked", "own_interpreter": "blocked"})
 
     def test_run_module_entry_point_installs_the_guard(self):
         completed = subprocess.run([sys.executable, "-I", str(HERE / "sandbox_guard.py"), "--run-module", "json.tool", "--help"], capture_output=True, text=True, timeout=60)

@@ -90,7 +90,9 @@ def final_path_of_fd(fd: int, fallback: str) -> str:
     func.argtypes = [wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD]
     func.restype = wintypes.DWORD
     buffer = ctypes.create_unicode_buffer(32768)
-    length = func(handle, buffer, 32768, 0)
+    # AppContainer may deny querying DOS volume metadata; the path without a
+    # volume name remains sufficient when paired with the source volume check.
+    length = func(handle, buffer, 32768, 4)
     if not length or length >= 32768:
         raise UnsafeSource("final path unavailable")
     value = buffer.value
@@ -99,6 +101,42 @@ def final_path_of_fd(fd: int, fallback: str) -> str:
     elif value.startswith("\\\\?\\"):
         value = value[4:]
     return value
+
+
+def final_path_of_directory(path: Path) -> str:
+    if os.name != "nt":
+        return os.path.realpath(path)
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                    ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel32.CreateFileW.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    handle = kernel32.CreateFileW(
+        os.path.abspath(path), 0x80, 0x1 | 0x2 | 0x4, None, 3, 0x02000000, None
+    )
+    if handle == wintypes.HANDLE(-1).value:
+        raise UnsafeSource("source root path unavailable")
+    try:
+        get_path = kernel32.GetFinalPathNameByHandleW
+        get_path.argtypes = [wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD]
+        get_path.restype = wintypes.DWORD
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = get_path(handle, buffer, len(buffer), 4)
+        if not length or length >= len(buffer):
+            raise UnsafeSource("source root path unavailable")
+        value = buffer.value
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        if value.startswith("\\") and not value.startswith("\\\\"):
+            value = os.path.splitdrive(os.path.abspath(path))[0] + value
+        return value
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def under(child: str, parent: str) -> bool:
@@ -121,7 +159,14 @@ def safe_read(root_real: str, path: Path, max_bytes: int) -> tuple[bytes, os.sta
         opened = os.fstat(fd)
         if (opened.st_ino, opened.st_dev, opened.st_size) != (before.st_ino, before.st_dev, before.st_size):
             raise UnsafeSource("file changed between validation and open")
-        if not under(final_path_of_fd(fd, str(path)), root_real):
+        root_info = os.stat(root_real)
+        if opened.st_dev != root_info.st_dev:
+            raise UnsafeSource("file outside source volume")
+        final_path = final_path_of_fd(fd, str(path))
+        if final_path.startswith("\\") and not final_path.startswith("\\\\"):
+            drive = os.path.splitdrive(root_real)[0]
+            final_path = drive + final_path
+        if not under(final_path, root_real):
             raise UnsafeSource("final path outside source root")
         chunks = []
         remaining = max_bytes + 1
@@ -273,6 +318,17 @@ def plan_projects(root: Path, selected: set[str] | None) -> tuple[list[ProjectPl
     return plans, skipped
 
 
+def clear_directory(path: Path) -> None:
+    for child in path.iterdir():
+        info = os.lstat(child)
+        if is_reparse(info):
+            child.unlink()
+        elif stat.S_ISDIR(info.st_mode):
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
 class Publisher:
     def __init__(self, exchange: Path, job_id: str, seq: int):
         self.exchange, self.job_id, self.seq = exchange, job_id, seq
@@ -304,7 +360,7 @@ def cancel_requested(input_dir: Path, job_id: str) -> bool:
 
 
 def catalog(root: Path, params: dict, publisher: Publisher, input_dir: Path, graph_builder) -> dict:
-    root_real = os.path.realpath(root)
+    root_real = final_path_of_directory(root)
     if is_reparse(os.lstat(root)):
         raise UnsafeSource("source root is a reparse point")
     selected = set(params["projects"]) if isinstance(params.get("projects"), list) else None
@@ -344,7 +400,9 @@ def catalog(root: Path, params: dict, publisher: Publisher, input_dir: Path, gra
         project_started = time.monotonic()
         files, chunks, excluded = [], [], list(plan.excluded)
         secret_blocked = 0
-        copy_dir = Path(tempfile.mkdtemp(prefix="a2p-copy-"))
+        copy_dir = publisher.exchange.parent / "copy"
+        copy_dir.mkdir(parents=True, exist_ok=True)
+        clear_directory(copy_dir)
         try:
             for path, kind in chosen[plan.key]:
                 if time.monotonic() - project_started > LIMITS["project_seconds"] or time.monotonic() - started > LIMITS["batch_seconds"]:
@@ -387,7 +445,7 @@ def catalog(root: Path, params: dict, publisher: Publisher, input_dir: Path, gra
             else:
                 graph = {"status": "no_code", "nodes": [], "edges": []}
         finally:
-            shutil.rmtree(copy_dir, ignore_errors=True)
+            clear_directory(copy_dir)
         output_name = f"project-{index}.json"
         publisher.publish(output_name, {
             "project": {"key": plan.key, "label": plan.label, "relativeRoot": plan.relative_root, "markers": plan.markers},
@@ -399,7 +457,7 @@ def catalog(root: Path, params: dict, publisher: Publisher, input_dir: Path, gra
 
 
 def revalidate(root: Path, params: dict) -> dict:
-    root_real = os.path.realpath(root)
+    root_real = final_path_of_directory(root)
     results = []
     for item in params.get("files", [])[:200]:
         rel = str(item.get("relativePath", ""))
@@ -485,7 +543,7 @@ def main() -> int:
     args = parser.parse_args()
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from sandbox_guard import install
-    install(allowed_executables=(sys.executable,))
+    install(allow_graphify=True)
     return run(args.input, args.exchange, args.source)
 
 

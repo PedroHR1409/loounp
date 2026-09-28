@@ -1,3 +1,5 @@
+import type { SavedThemeIdea, ThemeBriefing, ThemeSearchEvent, ThemeSearchInput } from "../core/theme-research/contracts";
+
 export {};
 
 declare global {
@@ -14,6 +16,10 @@ declare global {
         errors: string[];
         stats: DiscoveryStats;
       }>;
+      setDiscoveryInterval: (hours: number) => Promise<void>;
+      setDiscoveryTimeGmtMinus3: (time: string) => Promise<void>;
+      onCaptureRequest: (callback: (url: string | null) => void) => () => void;
+      onFeedUpdated: (callback: () => void) => () => void;
       recordFeedback: (
         contentId: string,
         action: string,
@@ -122,6 +128,7 @@ declare global {
         projectId: string,
       ) => Promise<ProjectContextStatus>;
       setRealSources: (enabled: boolean) => Promise<ProjectContextStatus>;
+      setSemanticRerank: (enabled: boolean) => Promise<ProjectContextStatus>;
       listMemory: () => Promise<MemoryListView>;
       answerKnowledge: (
         term: string,
@@ -154,7 +161,41 @@ declare global {
         memoryId: string,
       ) => Promise<MemoryListView & { notice: string }>;
     };
+    themeResearch: {
+      start: (input: ThemeSearchInput) => Promise<{ searchId: string }>;
+      cancel: (searchId: string) => Promise<boolean>;
+      onEvent: (callback: (event: ThemeSearchEvent) => void) => () => void;
+      saveIdea: (input: { searchId: string; ideaId: string; projectId?: string }) => Promise<SavedThemeIdea>;
+      listSaved: (input?: { projectId?: string }) => Promise<SavedThemeIdea[]>;
+      deleteSaved: (id: string) => Promise<void>;
+      getStatus: (searchId: string) => Promise<ThemeBriefing | null>;
+    };
+    linkedinPosts: {
+      generate: (input: { source: LinkedInPostSource }) => Promise<LinkedInPostRecord>;
+      list: () => Promise<LinkedInPostRecord[]>;
+      update: (input: { id: string; post: string; selectedHook: string }) => Promise<LinkedInPostRecord[]>;
+      delete: (id: string) => Promise<LinkedInPostRecord[]>;
+    };
   }
+  type LinkedInPostSource =
+    | { kind: "article_url"; url: string; title?: string }
+    | { kind: "article_text"; text: string; title?: string }
+    | { kind: "feed_article"; contentId: string }
+    | { kind: "idea_text"; text: string; title?: string }
+    | { kind: "saved_idea"; operationId: string };
+  type LinkedInSchedule = { iso: string; label: string; rationale: string };
+  type LinkedInPostRecord = {
+    id: string;
+    createdAt: string;
+    sourceTitle: string;
+    sourceKind: "article" | "idea";
+    hooks: [string, string, string];
+    selectedHook: string;
+    post: string;
+    angle: string;
+    engagementRationale: string;
+    recommendedAt: LinkedInSchedule;
+  };
   type IdeaPurpose = "portfolio" | "practical" | "both";
   type IdeaModelConfig = {
     provider: "openai";
@@ -321,6 +362,7 @@ declare global {
       updatedAt: string;
     }>;
     lastCatalog: { at: string; coverage: CatalogCoverageView } | null;
+    semanticRerank: { enabled: boolean; available: boolean };
   };
   type MemoryKindName =
     | "goal"
@@ -440,12 +482,14 @@ declare global {
     hasApiKey: boolean;
     hasJevKey: boolean;
     lastRefresh: string | null;
+    discoveryIntervalHours: number;
+    discoveryTimeGmtMinus3: string;
     rankingSource: "jev" | "fallback" | "reference";
     rankingStatus: string;
   };
   type ContentItem = {
     id: string;
-    source: "devto" | "medium";
+    source: "devto" | "medium" | "rss";
     title: string;
     url: string;
     author: string;
